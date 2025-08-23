@@ -5,7 +5,7 @@
     android:theme="@style/Theme.SofiaWidget.AppWidgetContainer">
 
     <TextView
-        android:id="@+id/counter"
+        android:id="@+id/response"
         style="@style/Widget.SofiaWidget.AppWidget.InnerView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -15,7 +15,7 @@
         android:contentDescription="@string/appwidget_text"
         android:text="@string/counter"
         android:textSize="24sp"
-        android:textStyle="bold|italic" />
+        android:textStyle="bold|italic"/>
     <Button
         android:id="@+id/button_click_me"
         android:layout_width="wrap_content"
@@ -23,5 +23,7 @@
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:text="@string/click_me"
+        android:textSize="11sp"
+        android:textStyle="bold|italic"
         />
 </RelativeLayout>
