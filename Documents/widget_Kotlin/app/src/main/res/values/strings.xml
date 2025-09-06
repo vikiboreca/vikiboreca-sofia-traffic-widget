@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">widget_Kotlin</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="BaseClick">Click me</string>
+    <string name="Test">Test</string>
+    <string name="add_widget">Add widget</string>
+    <string name="app_widget_description">This is an app widget description</string>
+</resources>

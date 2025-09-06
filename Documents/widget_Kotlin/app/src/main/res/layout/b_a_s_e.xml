@@ -1,0 +1,32 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Widget_Kotlin.AppWidget.Container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:theme="@style/Theme.Widget_Kotlin.AppWidgetContainer">
+
+    <TextView
+        android:id="@+id/response"
+        style="@style/Widget.Widget_Kotlin.AppWidget.InnerView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="false"
+        android:layout_margin="8dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@null"
+        android:text="@string/Test"
+        android:textSize="24sp"
+        android:textStyle="bold|italic"
+        android:textColor="@color/black"
+        />
+    <Button
+        android:id="@+id/button_click_me"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:text="@string/BaseClick"
+        android:textSize="11sp"
+        android:textStyle="bold|italic"
+        />
+</RelativeLayout>
