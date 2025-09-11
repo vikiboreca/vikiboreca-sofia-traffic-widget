@@ -51,6 +51,7 @@ import okhttp3.Callback
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.time.Duration.Companion.minutes
 
 class Base_Glance : GlanceAppWidget() {
     override val sizeMode: SizeMode
@@ -186,10 +187,11 @@ class Base_Glance : GlanceAppWidget() {
         val maxRows = 3f
 
         val value = maxChars * Scaling.width.value
-        val max_length = if(Scaling.width.value==1f){ceil(value)}else{floor(value)}
+        val maxLength = floor(value)
         var maxStringLength = 1
         busList.forEach { it ->
-            val curr = it.bus.name.length + it.bus.arriveTimes.toString().length - 6
+            val arrivals = it.arrivals.map{it.minutes}
+            val curr = it.bus.name.length + arrivals.toString().length - 2 - (2*(arrivals.size-1)) //for "[]", " " and ","
             if (curr > maxStringLength) maxStringLength = curr
         }
 
@@ -197,7 +199,7 @@ class Base_Glance : GlanceAppWidget() {
         val curr = 1f / maxItems
         val now = 1f / busList.size
 
-        val xScale = max_length / maxStringLength
+        val xScale = maxLength / maxStringLength
         val yScale = 1 / (curr / now)
 
         smallerButtons = if(abs(xScale-yScale)<0.05f){true}else{false}
@@ -209,15 +211,12 @@ class Base_Glance : GlanceAppWidget() {
     fun Int.dpScaled(scale: Float) = (this * scale).dp
     fun Int.spScaled(scale: Float) = (this * scale).sp
 }
-    // Helper functions to scale dp and sp
-    fun Int.dpScaled(scale: Float) = (this * scale).dp
-    fun Int.spScaled(scale: Float) = (this * scale).sp
 
 
 class BaseButton : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
-            val map = getMap(context,"0821")
+            val map = getMap(context,"2327")
             saveListMemory(context, map, glanceId)
             Base_Glance().update(context, glanceId)
         } catch (e: Exception) {
