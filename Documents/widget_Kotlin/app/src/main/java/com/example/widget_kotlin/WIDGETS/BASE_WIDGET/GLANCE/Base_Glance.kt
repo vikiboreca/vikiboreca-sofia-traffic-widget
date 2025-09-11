@@ -1,6 +1,7 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE
 
 import android.content.Context
+import android.content.res.AssetManager
 import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
@@ -43,11 +44,16 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.text.TextStyle
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Station
+import com.google.gson.Gson
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Callback
+import java.util.Locale
+import java.util.Locale.getDefault
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.system.exitProcess
 
 class Base_Glance : GlanceAppWidget() {
     override val sizeMode: SizeMode
@@ -206,7 +212,7 @@ class Base_Glance : GlanceAppWidget() {
 class BaseButton : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
-            val map = getMap("0821")
+            val map = getMap(context,"0821")
             saveListMemory(context, map, glanceId)
             Base_Glance().update(context, glanceId)
         } catch (e: Exception) {
@@ -224,7 +230,7 @@ class BaseButton : ActionCallback {
         client.newCall(request).enqueue(call)
     }
 
-    private suspend fun getMap(stopID: String): LinkedHashMap<Bus, ArrayList<ArriveTime>> =
+    private suspend fun getMap(context: Context,stopID: String): LinkedHashMap<Bus, ArrayList<ArriveTime>> =
         suspendCancellableCoroutine { cont ->
             ReceiveData(stopID, object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
@@ -239,8 +245,10 @@ class BaseButton : ActionCallback {
                         val gson = gsonBuilder.create()
                         val listType = object : TypeToken<List<Bus>>() {}.type
                         val buses: List<Bus> = gson.fromJson(value, listType)
-
                         val busMap: LinkedHashMap<Bus, ArrayList<ArriveTime>> = LinkedHashMap()
+
+                        val assetManager = context.assets
+                        val typesJson = assetManager.open("types.json").bufferedReader().use{it.readText()}
                         for (bus in buses) {
                             if (!busMap.containsKey(bus)) {
                                 val arriveTimes: ArrayList<ArriveTime> = ArrayList()
@@ -271,5 +279,25 @@ class BaseButton : ActionCallback {
         val gson = GsonBuilder().create()
         val list = map.map { (bus, arrivals) -> BusEntry(bus, arrivals) }
         prefs.edit { putString("bus_list$glanceId", gson.toJson(list)).apply() }
+    }
+    private fun isLastStation(assetManager: AssetManager,vehicleTypes:String,type:Int, name:String, station:String):Boolean{
+        val map = getisLastStationMap(assetManager, vehicleTypes, type)
+        map.get(name)?.forEach {
+
+        }
+        return false
+    }
+    private fun getisLastStationMap(assetManager: AssetManager,vehicleTypes:String,type:Int):Map<String, List<String>>{
+        val gson = GsonBuilder().create()
+        val data: Map<String, List<Map<String, Any>>> = gson.fromJson(vehicleTypes, object : TypeToken<Map<String, List<Map<String, Any>>>>() {}.type)
+        val typeList = data["types"]
+        val typeName: String = typeList?.get(type-1)?.get("name") as? String ?: "error"
+        try{
+            if(typeName == "error") throw Exception("Type deserialisation error")
+        }catch(e:Exception){Log.d("fuck ass error", e.toString()); exitProcess(1)}
+        val listText = assetManager.open("$typeName.json").bufferedReader().use{it.readText()}
+        val listType = object : TypeToken<ArrayList<Station>>() {}.type
+        val stationsList: ArrayList<Station> = gson.fromJson(listText, listType)
+        return stationsList.associate { it.name to it.stops }
     }
 }
