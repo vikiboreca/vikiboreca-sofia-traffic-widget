@@ -24,7 +24,7 @@ import androidx.glance.text.Text
 import com.example.widget_kotlin.R
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.BusEntry
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.BusEntry
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import okhttp3.Call
@@ -44,22 +44,22 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.text.TextStyle
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Station
-import com.google.gson.Gson
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Callback
-import java.util.Locale
-import java.util.Locale.getDefault
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.system.exitProcess
 
 class Base_Glance : GlanceAppWidget() {
     override val sizeMode: SizeMode
         get() = SizeMode.Exact
 
     var smallerButtons:Boolean = false
+    val defaultColor = ColorProvider(Color.Black, Color.White)
+
+    val textSizeDefault = 24
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Standard is 192 x 225 dp for 3 buses at 24 sp with max 16 chars (15 for safety)
@@ -105,28 +105,29 @@ class Base_Glance : GlanceAppWidget() {
                                     Row {
                                         Text(
                                             text = bus.name,
-                                            style = TextStyle(fontSize = 24.spScaled(scale)),
+                                            style = TextStyle(fontSize = textSizeDefault.spScaled(scale)),
                                             modifier = GlanceModifier.clickable(actionRunCallback<ActionCallback>())
                                         )
                                         Text(
                                             " - ",
                                             style = TextStyle(
-                                                fontSize = 24.spScaled(scale),
-                                                color = ColorProvider(Color.Cyan, Color.Red)
+                                                fontSize = textSizeDefault.spScaled(scale),
+                                                color = defaultColor
                                             )
                                         )
                                         arrivals.map(ArriveTime::minutes)
                                             .forEachIndexed { index, minutes ->
+                                                val colorState = if(arrivals[index].isLastStation){defaultColor}else{ColorProvider(Color.Red, Color.Red)}
                                                 Row {
                                                     Text(
                                                         minutes.toString(),
-                                                        style = TextStyle(fontSize = 24.spScaled(scale)),
+                                                        style = TextStyle(fontSize = textSizeDefault.spScaled(scale), color = colorState),
                                                         modifier = GlanceModifier.clickable(actionRunCallback<ActionCallback>())
                                                     )
                                                     if (index != arrivals.size - 1) {
                                                         Text(
                                                             ", ",
-                                                            style = TextStyle(fontSize = 24.spScaled(scale))
+                                                            style = TextStyle(fontSize = textSizeDefault.spScaled(scale))
                                                         )
                                                     }
                                                 }
@@ -143,7 +144,7 @@ class Base_Glance : GlanceAppWidget() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         val buttonsPadding = if(changePadding){4}else{12}
-                        var buttonScale = if(!smallerButtons){scale * 0.9f}else{scale*0.6f}
+                        val buttonScale = if(!smallerButtons){scale * 0.9f}else{scale*0.6f}
                         Row(modifier = GlanceModifier.padding(bottom = buttonsPadding.dpScaled(scale))) {
                             Row(modifier = GlanceModifier.padding(end = 6.dp)) {
                                 Button(
@@ -208,6 +209,10 @@ class Base_Glance : GlanceAppWidget() {
     fun Int.dpScaled(scale: Float) = (this * scale).dp
     fun Int.spScaled(scale: Float) = (this * scale).sp
 }
+    // Helper functions to scale dp and sp
+    fun Int.dpScaled(scale: Float) = (this * scale).dp
+    fun Int.spScaled(scale: Float) = (this * scale).sp
+
 
 class BaseButton : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
@@ -250,17 +255,18 @@ class BaseButton : ActionCallback {
                         val assetManager = context.assets
                         val typesJson = assetManager.open("types.json").bufferedReader().use{it.readText()}
                         for (bus in buses) {
+                            val (map, isLast) = isLastStation(assetManager, typesJson, bus)
                             if (!busMap.containsKey(bus)) {
                                 val arriveTimes: ArrayList<ArriveTime> = ArrayList()
                                 for (time in bus.arriveTimes) {
-                                    val arr = ArriveTime(time, true, bus.lastStop)
+                                    val arr = ArriveTime(time, isLast, bus.lastStop)
                                     arriveTimes.add(arr)
                                 }
                                 busMap[bus] = arriveTimes
                             } else {
                                 val original: ArrayList<ArriveTime>? = busMap[bus]
                                 for (time in bus.arriveTimes) {
-                                    val arr = ArriveTime(time, false, bus.lastStop)
+                                    val arr = ArriveTime(time, isLastStation(bus, map), bus.lastStop)
                                     original?.add(arr)
                                 }
                                 original?.sortBy(ArriveTime::minutes)
@@ -280,24 +286,42 @@ class BaseButton : ActionCallback {
         val list = map.map { (bus, arrivals) -> BusEntry(bus, arrivals) }
         prefs.edit { putString("bus_list$glanceId", gson.toJson(list)).apply() }
     }
-    private fun isLastStation(assetManager: AssetManager,vehicleTypes:String,type:Int, name:String, station:String):Boolean{
-        val map = getisLastStationMap(assetManager, vehicleTypes, type)
-        map.get(name)?.forEach {
 
+
+    private fun isLastStation(assetManager: AssetManager,vehicleTypes:String,bus:Bus):Pair<Map<String, List<String>>, Boolean>{
+        val map = getIsLastStationMap(assetManager, vehicleTypes, bus)
+        val normalizesStation = normalizeString(bus.lastStop)
+        map[bus.name]?.forEach {
+            val normalizeCompare = normalizeString(it)
+            if(normalizesStation == normalizeCompare) return Pair(map, true)
+        }
+        return Pair(map, false)
+    }
+    private fun isLastStation(bus:Bus, map:Map<String, List<String>>):Boolean{
+        val normalizesStation = normalizeString(bus.lastStop)
+        map[bus.name]?.forEach {
+            val normalizeCompare = normalizeString(it)
+            if(normalizesStation == normalizeCompare) return true
         }
         return false
     }
-    private fun getisLastStationMap(assetManager: AssetManager,vehicleTypes:String,type:Int):Map<String, List<String>>{
+
+
+    private fun getIsLastStationMap(assetManager: AssetManager,vehicleTypes:String,bus:Bus):Map<String, List<String>>{
         val gson = GsonBuilder().create()
-        val data: Map<String, List<Map<String, Any>>> = gson.fromJson(vehicleTypes, object : TypeToken<Map<String, List<Map<String, Any>>>>() {}.type)
-        val typeList = data["types"]
-        val typeName: String = typeList?.get(type-1)?.get("name") as? String ?: "error"
-        try{
-            if(typeName == "error") throw Exception("Type deserialisation error")
-        }catch(e:Exception){Log.d("fuck ass error", e.toString()); exitProcess(1)}
+        val data: TypeAdvanced = gson.fromJson(vehicleTypes, object : TypeToken<TypeAdvanced>() {}.type)
+        val typeList = data.types
+        val typeName = typeList[bus.type-1].name
+
         val listText = assetManager.open("$typeName.json").bufferedReader().use{it.readText()}
-        val listType = object : TypeToken<ArrayList<Station>>() {}.type
-        val stationsList: ArrayList<Station> = gson.fromJson(listText, listType)
+        val listType = object : TypeToken<StationAdvanced>() {}.type
+        val advanced: StationAdvanced = gson.fromJson(listText, listType)
+        val stationsList = advanced.lines
         return stationsList.associate { it.name to it.stops }
+    }
+
+    private fun normalizeString(word:String):String{
+        return word.lowercase().replace(Regex("[,.?\":-]"), "")
+            .replace("\\s+".toRegex(), "").trim()
     }
 }
