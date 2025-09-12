@@ -49,9 +49,7 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Callback
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.time.Duration.Companion.minutes
 
 class Base_Glance : GlanceAppWidget() {
     override val sizeMode: SizeMode
@@ -59,7 +57,6 @@ class Base_Glance : GlanceAppWidget() {
 
     var smallerButtons:Boolean = false
     val defaultColor = ColorProvider(Color.Black, Color.White)
-
     val textSizeDefault = 24
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -216,7 +213,7 @@ class Base_Glance : GlanceAppWidget() {
 class BaseButton : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
-            val map = getMap(context,"2327")
+            val map = getMap(context,"0603")
             saveListMemory(context, map, glanceId)
             Base_Glance().update(context, glanceId)
         } catch (e: Exception) {
@@ -254,9 +251,10 @@ class BaseButton : ActionCallback {
                         val assetManager = context.assets
                         val typesJson = assetManager.open("types.json").bufferedReader().use{it.readText()}
                         for (bus in buses) {
-                            val (map, isLast) = isLastStation(assetManager, typesJson, bus)
+                            val map = getIsLastStationMap(assetManager, typesJson, bus)
                             if (!busMap.containsKey(bus)) {
                                 val arriveTimes: ArrayList<ArriveTime> = ArrayList()
+                                val isLast = isLastStation(bus, map)
                                 for (time in bus.arriveTimes) {
                                     val arr = ArriveTime(time, isLast, bus.lastStop)
                                     arriveTimes.add(arr)
@@ -264,8 +262,9 @@ class BaseButton : ActionCallback {
                                 busMap[bus] = arriveTimes
                             } else {
                                 val original: ArrayList<ArriveTime>? = busMap[bus]
+                                val isLast = isLastStation(bus, map)
                                 for (time in bus.arriveTimes) {
-                                    val arr = ArriveTime(time, isLastStation(bus, map), bus.lastStop)
+                                    val arr = ArriveTime(time, isLast, bus.lastStop)
                                     original?.add(arr)
                                 }
                                 original?.sortBy(ArriveTime::minutes)
@@ -286,22 +285,17 @@ class BaseButton : ActionCallback {
         prefs.edit { putString("bus_list$glanceId", gson.toJson(list)).apply() }
     }
 
-
-    private fun isLastStation(assetManager: AssetManager,vehicleTypes:String,bus:Bus):Pair<Map<String, List<String>>, Boolean>{
-        val map = getIsLastStationMap(assetManager, vehicleTypes, bus)
-        val normalizesStation = normalizeString(bus.lastStop)
-        map[bus.name]?.forEach {
-            val normalizeCompare = normalizeString(it)
-            if(normalizesStation == normalizeCompare) return Pair(map, true)
-        }
-        return Pair(map, false)
-    }
     private fun isLastStation(bus:Bus, map:Map<String, List<String>>):Boolean{
-        val normalizesStation = normalizeString(bus.lastStop)
+        val stationA = normalizeString(bus.lastStop)
+        var check = ""
         map[bus.name]?.forEach {
-            val normalizeCompare = normalizeString(it)
-            if(normalizesStation == normalizeCompare) return true
+            val stationB = normalizeString(it)
+            check += "$stationB "
+            if(stationA == stationB) return true
+            if(stationA.contains(stationB)) return true
+            if(stationB.contains(stationA)) return true
         }
+        Log.d("check", "$stationA $check")
         return false
     }
 
@@ -320,7 +314,7 @@ class BaseButton : ActionCallback {
     }
 
     private fun normalizeString(word:String):String{
-        return word.lowercase().replace(Regex("[,.?\":-]"), "")
+        return word.lowercase().replace(Regex("[,.?\"„“:()-]"), "")
             .replace("\\s+".toRegex(), "").trim()
     }
 }
