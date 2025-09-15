@@ -23,6 +23,20 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/glance_widget_info" />
         </receiver>
-    </application>
+        <activity
+            android:name=".WIDGETS.BASE_WIDGET.COMPOSE.PopUpActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Material3.DayNight.Dialog"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleInstancePerTask"
+            android:taskAffinity="">
 
+            <!-- This makes it appear as a launcher icon -->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
+    </application>
 </manifest>

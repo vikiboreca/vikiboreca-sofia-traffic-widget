@@ -37,6 +37,7 @@ import okio.IOException
 import androidx.core.content.edit
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalSize
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.color.ColorProvider
@@ -46,10 +47,10 @@ import androidx.glance.layout.padding
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.PopUpButton
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Callback
 import kotlin.math.abs
-import kotlin.math.floor
 
 class Base_Glance : GlanceAppWidget() {
     override val sizeMode: SizeMode
@@ -117,10 +118,14 @@ class Base_Glance : GlanceAppWidget() {
                                             .forEachIndexed { index, minutes ->
                                                 val colorState = if(arrivals[index].isLastStation){defaultColor}else{ColorProvider(Color.Red, Color.Red)}
                                                 Row {
+                                                    putValueInSharedPreferences(context, "any","nigger balls")
                                                     Text(
                                                         minutes.toString(),
                                                         style = TextStyle(fontSize = textSizeDefault.spScaled(scale), color = colorState),
-                                                        modifier = GlanceModifier.clickable(actionRunCallback<ActionCallback>())
+                                                        modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
+                                                            parameters = actionParametersOf(ActionParameters.Key<String>("nigga") to "balls")
+                                                        )
+                                                    )
                                                     )
                                                     if (index != arrivals.size - 1) {
                                                         Text(
@@ -143,19 +148,21 @@ class Base_Glance : GlanceAppWidget() {
                     ) {
                         val buttonsPadding = if(changePadding){4}else{12}
                         val buttonScale = if(!smallerButtons){scale * 0.9f}else{scale*0.6f}
+                        var buttonSize = 18.spScaled(buttonScale)
+                        buttonSize = buttonSize.value.coerceAtMost(18*1.2f).sp
                         Row(modifier = GlanceModifier.padding(bottom = buttonsPadding.dpScaled(scale))) {
                             Row(modifier = GlanceModifier.padding(end = 6.dp)) {
                                 Button(
                                     text = "Good",
                                     onClick = actionRunCallback<BaseButton>(),
-                                    style = TextStyle(fontSize = 18.spScaled(buttonScale))
+                                    style = TextStyle(fontSize = buttonSize)
                                 )
                             }
                             Row(modifier = GlanceModifier.padding(start = 6.dp)) {
                                 Button(
                                     text = "Clear",
                                     onClick = actionRunCallback<ActionCallback>(),
-                                    style = TextStyle(fontSize = 18.spScaled(buttonScale))
+                                    style = TextStyle(fontSize = buttonSize)
                                 )
                             }
                         }
@@ -184,11 +191,12 @@ class Base_Glance : GlanceAppWidget() {
         val maxRows = 3f
 
         val value = maxChars * Scaling.width.value
-        val maxLength = floor(value)
+        //val maxLength = floor(value)
         var maxStringLength = 1
         busList.forEach { it ->
             val arrivals = it.arrivals.map{it.minutes}
             val curr = it.bus.name.length + arrivals.toString().length - 2 - (2*(arrivals.size-1)) //for "[]", " " and ","
+            //Log.d("test", "$arrivals $curr")
             if (curr > maxStringLength) maxStringLength = curr
         }
 
@@ -196,24 +204,30 @@ class Base_Glance : GlanceAppWidget() {
         val curr = 1f / maxItems
         val now = 1f / busList.size
 
-        val xScale = maxLength / maxStringLength
+        val xScale = value / maxStringLength
         val yScale = 1 / (curr / now)
 
-        smallerButtons = if(abs(xScale-yScale)<0.05f){true}else{false}
-
         Log.d("comparing", "$xScale $yScale")
-        return minOf(xScale, yScale)
+        val finalScale = minOf(xScale, yScale)
+        smallerButtons = if(abs(xScale-yScale)<0.1f){true}else{false}
+        return finalScale
     }
     // Helper functions to scale dp and sp
     fun Int.dpScaled(scale: Float) = (this * scale).dp
     fun Int.spScaled(scale: Float) = (this * scale).sp
+
+    private fun putValueInSharedPreferences(context:Context,identifier:String,vararg data:Any) {
+        val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
+        prefs.edit{putInt("identifier -1", data.size)}
+        data.forEachIndexed { index, any ->
+            prefs.edit{putString("$identifier $index", any.toString())}
+        }
+    }
 }
-
-
 class BaseButton : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
-            val map = getMap(context,"0603")
+            val map = getMap(context,"0821")
             saveListMemory(context, map, glanceId)
             Base_Glance().update(context, glanceId)
         } catch (e: Exception) {

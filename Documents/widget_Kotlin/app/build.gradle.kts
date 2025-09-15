@@ -60,6 +60,14 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material)
     implementation(libs.androidx.glance.material3)
+    //Holy Compose
+    implementation(libs.compose.ui)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.material3)
+    implementation(libs.activity.compose)
+    implementation(libs.compose.ui.tooling)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
