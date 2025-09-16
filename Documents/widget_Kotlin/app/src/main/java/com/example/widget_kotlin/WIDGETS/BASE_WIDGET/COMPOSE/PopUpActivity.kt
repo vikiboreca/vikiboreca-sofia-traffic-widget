@@ -8,31 +8,42 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionParametersOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
 
 
 class PopUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        var test:String? = intent.getStringExtra("test")
-        if(test.isNullOrEmpty()) test = "error"
-        val a = getTextItems(getSharedPreferences("bus_widget", Context.MODE_PRIVATE))
+        val list = getTextItems(getSharedPreferences("bus_widget", Context.MODE_PRIVATE))
+        val paintRed = list.last() == "true"
+        val text = getText(list, paintRed)
         setContent {
             MaterialTheme{
-                Text(a.toString())
+                Text(text)
             }
         }
     }
 
-    private fun getTextItems(prefs: SharedPreferences):List<String>{
+    private fun getTextItems(prefs: SharedPreferences):ArrayList<String>{
         val list = ArrayList<String>()
-        val count = prefs.getInt("any -1", 0)
+        val count = prefs.getInt("popTextCount", 0)
         for(i in 0 until count){
-            var word = prefs.getString("any $i", "error")
-            if(word.isNullOrEmpty()) word = "error"
-            list.add(word)
+            var word = prefs.getString("popText$i", "error")
+            if(!word.isNullOrEmpty()) list.add(word)
         }
         return list
+    }
+
+    private fun getText(list:ArrayList<String>, paintRed:Boolean):String{
+        if(paintRed){
+            val last = list[list.size-2]
+            list.removeAt(list.size-1)
+            val parts = last.split(":")
+            //withStyle(SpanStyle(color = Color.Red)){
+              //  append(parts[parts.size-1])
+            //}
+        }
+        return list.joinToString(separator = "\n")
     }
 }
