@@ -18,9 +18,12 @@ import androidx.compose.ui.text.withStyle
 class PopUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val list = getTextItems(getSharedPreferences("bus_widget", MODE_PRIVATE))
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val list = getTextItems(prefs)
+        val count = prefs.getInt("popTextCount", 0)
         val paintRed = list[list.size-1] == "false"
-        if(list.size>1) list.removeAt(list.size-1)
+        if(count>1) list.removeAt(list.size-1)
+
         val text = getText(list, paintRed)
         setContent {
             MaterialTheme{
@@ -61,9 +64,5 @@ class PopUpActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun getText(list:ArrayList<String>):String{
-        return list.joinToString("\n")
     }
 }

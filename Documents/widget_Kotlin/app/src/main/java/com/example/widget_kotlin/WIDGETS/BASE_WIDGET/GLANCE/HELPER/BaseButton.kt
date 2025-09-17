@@ -65,6 +65,7 @@ class BaseButton : ActionCallback {
 
                         val assetManager = context.assets
                         val typesJson = assetManager.open("types.json").bufferedReader().use{it.readText()}
+
                         for (bus in buses) {
                             val map = getIsLastStationMap(assetManager, typesJson, bus)
                             if (!busMap.containsKey(bus)) {
@@ -74,14 +75,18 @@ class BaseButton : ActionCallback {
                                     val arr = ArriveTime(time, isLast, bus.lastStop)
                                     arriveTimes.add(arr)
                                 }
+                                if(isLast) arriveTimes.forEach { it-> it.realLastStation = bus.lastStop }
                                 busMap[bus] = arriveTimes
                             } else {
                                 val original: ArrayList<ArriveTime>? = busMap[bus]
+                                val result = original?.firstOrNull{ it.isLastStation }
                                 val isLast = isLastStation(bus, map)
                                 for (time in bus.arriveTimes) {
                                     val arr = ArriveTime(time, isLast, bus.lastStop)
+                                    if(result!=null) arr.realLastStation = result.realLastStation
                                     original?.add(arr)
                                 }
+                                if(result==null && isLast) original?.forEach{ it->it.realLastStation = bus.lastStop}
                                 original?.sortBy(ArriveTime::minutes)
                             }
                         }

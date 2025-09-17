@@ -16,7 +16,7 @@ class PopUpButton : ActionCallback{
         val stationStop = parameters[ActionParameters.Key<String>("stationStop")]
         val isLast = parameters[ActionParameters.Key<String>("isLast")]
         if(!busType.isNullOrEmpty()) list.add(busType)
-        if(!busStop.isNullOrEmpty()) list.add("Последна спирка: $busStop")
+        if(!busStop.isNullOrEmpty() && busStop!="undefined") list.add("Последна спирка: $busStop")
         if(!stationStop.isNullOrEmpty()) list.add("Води до: $stationStop")
         if(!isLast.isNullOrEmpty()) list.add(isLast)
         saveToPreferences(context, list)

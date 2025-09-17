@@ -37,6 +37,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.PopUpButton
@@ -116,7 +117,7 @@ class Base_Glance : GlanceAppWidget() {
                                                         style = TextStyle(fontSize = textSizeDefault.spScaled(scale), color = colorState),
                                                         modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
                                                             parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to arrivals[index].lastStation,
-                                                            ActionParameters.Key<String>("busStop") to bus.lastStop,
+                                                            ActionParameters.Key<String>("busStop") to arrivals[index].realLastStation,
                                                                 ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString())
                                                         )
                                                     )
@@ -203,8 +204,10 @@ class Base_Glance : GlanceAppWidget() {
         val yScale = 1 / (curr / now)
 
         Log.d("comparing", "$xScale $yScale")
-        val finalScale = minOf(xScale, yScale)
-        smallerButtons = if(abs(xScale-yScale)<0.1f){true}else{false}
+        var finalScale = minOf(xScale, yScale)
+        val xMax = Scaling.width.value*1.2f
+        finalScale = finalScale.coerceAtMost(xMax)
+        smallerButtons = abs(xScale-yScale)<0.1f
         return finalScale
     }
     private fun getTypeName(context:Context,bus:Bus):String{
