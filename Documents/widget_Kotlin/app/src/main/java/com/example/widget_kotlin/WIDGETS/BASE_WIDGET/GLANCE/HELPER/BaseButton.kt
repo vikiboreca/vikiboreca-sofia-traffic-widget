@@ -26,6 +26,7 @@ import okhttp3.Response
 import okio.IOException
 
 class BaseButton : ActionCallback {
+    var CurrentStationID:String = ""
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
             val map = getMap(context,"0603")
@@ -37,6 +38,7 @@ class BaseButton : ActionCallback {
     }
 
     private fun ReceiveData(stopID: String, call: Callback) {
+        CurrentStationID = stopID
         val client = OkHttpClient()
         val url = "http://100.114.8.24:8080/api/scrap"
         val jsonBody = "{\"stop\":\"$stopID\"}".trimIndent()
@@ -68,6 +70,7 @@ class BaseButton : ActionCallback {
 
                         for (bus in buses) {
                             val map = getIsLastStationMap(assetManager, typesJson, bus)
+                            val realLastStation = getFromPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, "undefined")
                             if (!busMap.containsKey(bus)) {
                                 val arriveTimes: ArrayList<ArriveTime> = ArrayList()
                                 val isLast = isLastStation(bus, map)
@@ -75,18 +78,26 @@ class BaseButton : ActionCallback {
                                     val arr = ArriveTime(time, isLast, bus.lastStop)
                                     arriveTimes.add(arr)
                                 }
-                                if(isLast) arriveTimes.forEach { it-> it.realLastStation = bus.lastStop }
+                                //saving to memory
+                                if(!realLastStation.isNullOrEmpty() && realLastStation != "undefined"){arriveTimes.forEach { it->it.realLastStation = realLastStation }}
+                                else if(isLast) {arriveTimes.forEach { it-> it.realLastStation = bus.lastStop }
+                                    saveToPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, bus.lastStop)
+                                }
+
                                 busMap[bus] = arriveTimes
                             } else {
                                 val original: ArrayList<ArriveTime>? = busMap[bus]
-                                val result = original?.firstOrNull{ it.isLastStation }
                                 val isLast = isLastStation(bus, map)
                                 for (time in bus.arriveTimes) {
                                     val arr = ArriveTime(time, isLast, bus.lastStop)
-                                    if(result!=null) arr.realLastStation = result.realLastStation
                                     original?.add(arr)
                                 }
-                                if(result==null && isLast) original?.forEach{ it->it.realLastStation = bus.lastStop}
+
+                                if(!realLastStation.isNullOrEmpty() && realLastStation != "undefined"){original?.forEach { it->it.realLastStation = realLastStation }}
+                                else if(isLast) {original?.forEach { it-> it.realLastStation = bus.lastStop }
+                                    saveToPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, bus.lastStop)
+                                }
+
                                 original?.sortBy(ArriveTime::minutes)
                             }
                         }
@@ -136,5 +147,15 @@ class BaseButton : ActionCallback {
     private fun normalizeString(word:String):String{
         return word.lowercase().replace(Regex("[,.?\"„“:()-]"), "")
             .replace("\\s+".toRegex(), "").trim()
+    }
+    private fun saveToPreferences(context:Context, tag:String, widgetID:Int?, value:Any){
+        val IDText = if(widgetID!=null){"$widgetID"}else{""}
+        val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
+        prefs.edit{putString("memory $tag $IDText", "$value")}
+    }
+    private fun getFromPreferences(context:Context, tag:String, widgetID:Int?, default:String):String?{
+        val IDText = if(widgetID!=null){"$widgetID"}else{""}
+        val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
+        return prefs.getString("memory $tag $IDText", default)
     }
 }
