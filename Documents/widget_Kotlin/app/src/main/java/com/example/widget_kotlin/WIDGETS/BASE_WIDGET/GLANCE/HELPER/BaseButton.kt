@@ -12,7 +12,7 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.BusEntry
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.Base_Glance
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.Base_Glance
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.suspendCancellableCoroutine

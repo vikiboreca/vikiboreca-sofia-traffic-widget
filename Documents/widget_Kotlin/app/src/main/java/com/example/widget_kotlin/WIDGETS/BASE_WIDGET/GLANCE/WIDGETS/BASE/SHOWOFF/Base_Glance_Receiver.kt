@@ -1,9 +1,7 @@
-package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE
+package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF
 
 import android.content.Context
-import android.util.Log
 import androidx.core.content.edit
-import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 
