@@ -1,8 +1,11 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import androidx.core.content.edit
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
+import android.widget.RemoteViews
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -11,7 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import com.example.widget_kotlin.R
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.launch
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
@@ -35,6 +44,10 @@ class AddStationActivity: ComponentActivity() {
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}
+        var label by remember{mutableStateOf("Type Station ID")}
+        var error by remember {mutableStateOf(false)}
+        val scope = rememberCoroutineScope()
+
             MaterialTheme {
                 Column(
                     modifier = Modifier.wrapContentSize(),
@@ -42,20 +55,43 @@ class AddStationActivity: ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally
                 )
                 {
-                    val labelExtra = if(ID.isEmpty()){"Station ID"}else{"Station Name"}
                     OutlinedTextField(
                         value = text,
                         onValueChange = {text = it},
-                        label = {Text("Type $labelExtra")},
-                        modifier = Modifier.wrapContentSize()
+                        label = {Text(label)},
+                        modifier = Modifier.wrapContentSize(),
+                        isError = error
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = {
                         if(ID.isEmpty()){
-                            //IsIDValid(text)
+                            IsIDValid(
+                                text,
+                                onValid = {
+                                    ID = text; text = ""; error = false
+                                    label = "Type Station Name"
+                                },
+                                onError = {
+                                    error = true
+                                    label = "Insert a correct ID"
+                                }
+                            )
                         }
                         else{
-
+                            if(!text.isEmpty() && !listHasName(text)){
+                                StationLabel = text
+                                saveToPreferences(ID, StationLabel)
+                                scope.launch {
+                                    updateWidget()
+                                    Log.d("nigger", "updated")
+                                    finish()
+                                    Log.d("nigger", "finish")
+                                }
+                            }
+                            else{
+                                error = true
+                                label = "Insert a correct name"
+                            }
                         }
                     })
                     {
@@ -64,11 +100,13 @@ class AddStationActivity: ComponentActivity() {
                 }
             }
     }
-    private fun IsIDValid(id:String, onValid:(String)->Unit, onError:()->Unit){
-        if(id.length!=4) runOnUiThread { onError() }
+    private fun IsIDValid(id:String, onValid:()->Unit, onError:()->Unit){
+        if(id.length!=4) {runOnUiThread { onError();}; return}
         id.forEach { it ->
-            if(!it.isDigit()) runOnUiThread { onError() }
+            if(!it.isDigit()) {runOnUiThread { onError();}; return}
         }
+        if(listHasID(id)) {runOnUiThread { onError();}; return}
+
         ReceiveData(id, object: Callback{
             override fun onFailure(call: Call, e: IOException) {
                 runOnUiThread { onError() }
@@ -78,7 +116,7 @@ class AddStationActivity: ComponentActivity() {
                 val body = response.body.string()
                 runOnUiThread {
                     if (response.code == 200 && body.isNotEmpty()) {
-                        onValid(id)
+                        onValid()
                     } else {
                         onError()
                     }
@@ -96,5 +134,48 @@ class AddStationActivity: ComponentActivity() {
         val requestBody = jsonBody.toRequestBody(mediaType)
         val request = Request.Builder().url(url).post(requestBody).build()
         client.newCall(request).enqueue(call)
+    }
+
+    private fun saveToPreferences(ID:String, Name:String){
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+
+        val listString = prefs.getString("PairList", null)
+        val pair = StationPair(ID, Name)
+        var list:ArrayList<StationPair> = ArrayList()
+        if(!listString.isNullOrEmpty()){
+            list = gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
+        }
+        list.add(pair)
+        val listSave = gson.toJson(list)
+        prefs.edit{
+            putString("PairList", listSave)
+        }
+    }
+
+    private fun listHasID(ID:String):Boolean{
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val listString = prefs.getString("PairList", null)
+        if(listString.isNullOrEmpty()) return false
+        val list:ArrayList<StationPair> = gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
+        val listIds = list.map{it.ID}
+        return listIds.contains(ID)
+    }
+    private fun listHasName(Name:String):Boolean{
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val listString = prefs.getString("PairList", null)
+        if(listString.isNullOrEmpty()) return false
+        val list:ArrayList<StationPair> = gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
+        val listIds = list.map{it.Name}
+        return listIds.contains(Name)
+    }
+
+    private suspend fun updateWidget(){
+        val glanceId = GlanceAppWidgetManager(this).getGlanceIds(SelectorGlance::class.java)
+        glanceId.forEach { id ->
+            SelectorGlance().update(this, id)
+        }
     }
 }
