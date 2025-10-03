@@ -1,11 +1,8 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import androidx.core.content.edit
 import android.os.Bundle
 import android.util.Log
-import android.widget.RemoteViews
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -14,9 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import com.example.widget_kotlin.R
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -32,6 +28,7 @@ import okio.IOException
 
 
 class AddStationActivity: ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent{
@@ -41,6 +38,7 @@ class AddStationActivity: ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun InputScreen(){
+
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}
@@ -80,12 +78,11 @@ class AddStationActivity: ComponentActivity() {
                         else{
                             if(!text.isEmpty() && !listHasName(text)){
                                 StationLabel = text
+                                val updater = WidgetUpdater(SelectorGlance::class.java)
                                 saveToPreferences(ID, StationLabel)
                                 scope.launch {
-                                    updateWidget()
-                                    Log.d("nigger", "updated")
+                                    updater.updateWidget(this@AddStationActivity)
                                     finish()
-                                    Log.d("nigger", "finish")
                                 }
                             }
                             else{
@@ -162,20 +159,15 @@ class AddStationActivity: ComponentActivity() {
         val listIds = list.map{it.ID}
         return listIds.contains(ID)
     }
-    private fun listHasName(Name:String):Boolean{
+    private fun listHasName(Name:String):Boolean {
         val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
         val gson = Gson()
         val listString = prefs.getString("PairList", null)
-        if(listString.isNullOrEmpty()) return false
-        val list:ArrayList<StationPair> = gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
-        val listIds = list.map{it.Name}
+        if (listString.isNullOrEmpty()) return false
+        val list: ArrayList<StationPair> =
+            gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
+        val listIds = list.map { it.Name }
         return listIds.contains(Name)
     }
 
-    private suspend fun updateWidget(){
-        val glanceId = GlanceAppWidgetManager(this).getGlanceIds(SelectorGlance::class.java)
-        glanceId.forEach { id ->
-            SelectorGlance().update(this, id)
-        }
-    }
 }

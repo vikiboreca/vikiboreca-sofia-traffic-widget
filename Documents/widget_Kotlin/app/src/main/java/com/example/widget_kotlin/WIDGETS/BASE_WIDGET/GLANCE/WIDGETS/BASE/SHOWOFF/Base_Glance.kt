@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceTheme
@@ -31,9 +33,12 @@ import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.color.ColorProvider
+import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
+import androidx.glance.state.GlanceStateDefinition
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
@@ -50,16 +55,21 @@ class Base_Glance : GlanceAppWidget() {
     val defaultColor = ColorProvider(Color.Black, Color.White)
     val textSizeDefault = 24
 
+    override var stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Standard is 192 x 225 dp for 3 buses at 24 sp with max 16 chars (15 for safety)
         val busList = getMemoryList(context, id)
         provideContent {
+            val prefs = currentState<Preferences>()
+            val now = prefs[longPreferencesKey("now")]
+
             val standard = DpSize(192.dp, 225.dp)
             val size = LocalSize.current
             val ratio = DpSize((size.width / standard.width).dp, (size.height / standard.height).dp)
             var scale = setScale(busList, ratio, size)
             if(busList.isEmpty()){scale = 1f}
-            val changePadding = ratio.width>ratio.height
+            //val changePadding = ratio.width>ratio.height
 
 
             Log.d("WidgetSize", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
