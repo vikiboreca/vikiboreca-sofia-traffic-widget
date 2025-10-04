@@ -44,6 +44,7 @@ class AddStationActivity: ComponentActivity() {
         var text by remember {mutableStateOf("")}
         var label by remember{mutableStateOf("Type Station ID")}
         var error by remember {mutableStateOf(false)}
+
         val scope = rememberCoroutineScope()
 
             MaterialTheme {
