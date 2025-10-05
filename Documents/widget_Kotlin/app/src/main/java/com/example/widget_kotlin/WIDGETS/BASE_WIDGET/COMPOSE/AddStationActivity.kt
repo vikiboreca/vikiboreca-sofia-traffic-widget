@@ -1,5 +1,6 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
+import android.annotation.SuppressLint
 import androidx.core.content.edit
 import android.os.Bundle
 import android.util.Log
@@ -11,11 +12,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Call
 import okhttp3.Callback
@@ -35,7 +41,6 @@ class AddStationActivity: ComponentActivity() {
             InputScreen()
         }
     }
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun InputScreen(){
 
@@ -44,8 +49,6 @@ class AddStationActivity: ComponentActivity() {
         var text by remember {mutableStateOf("")}
         var label by remember{mutableStateOf("Type Station ID")}
         var error by remember {mutableStateOf(false)}
-
-        val scope = rememberCoroutineScope()
 
             MaterialTheme {
                 Column(
@@ -81,7 +84,7 @@ class AddStationActivity: ComponentActivity() {
                                 StationLabel = text
                                 val updater = WidgetUpdater(SelectorGlance::class.java)
                                 saveToPreferences(ID, StationLabel)
-                                scope.launch {
+                                lifecycleScope.launch(Dispatchers.Default) {
                                     updater.updateWidget(this@AddStationActivity)
                                     finish()
                                 }
@@ -139,10 +142,10 @@ class AddStationActivity: ComponentActivity() {
         val gson = Gson()
 
         val listString = prefs.getString("PairList", null)
-        val pair = StationPair(ID, Name)
-        var list:ArrayList<StationPair> = ArrayList()
+        val pair = StationPairAdvanced(StationPair(ID, Name))
+        var list:ArrayList<StationPairAdvanced> = ArrayList()
         if(!listString.isNullOrEmpty()){
-            list = gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
+            list = gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
         }
         list.add(pair)
         val listSave = gson.toJson(list)
@@ -156,8 +159,9 @@ class AddStationActivity: ComponentActivity() {
         val gson = Gson()
         val listString = prefs.getString("PairList", null)
         if(listString.isNullOrEmpty()) return false
-        val list:ArrayList<StationPair> = gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
-        val listIds = list.map{it.ID}
+        val list:ArrayList<StationPairAdvanced> = gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
+        val listOriginals = list.map{it.original}
+        val listIds = listOriginals.map{it.ID}
         return listIds.contains(ID)
     }
     private fun listHasName(Name:String):Boolean {
@@ -165,9 +169,10 @@ class AddStationActivity: ComponentActivity() {
         val gson = Gson()
         val listString = prefs.getString("PairList", null)
         if (listString.isNullOrEmpty()) return false
-        val list: ArrayList<StationPair> =
-            gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
-        val listIds = list.map { it.Name }
+        val list: ArrayList<StationPairAdvanced> =
+            gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
+        val listOriginals = list.map{it.original}
+        val listIds = listOriginals.map{it.Name}
         return listIds.contains(Name)
     }
 

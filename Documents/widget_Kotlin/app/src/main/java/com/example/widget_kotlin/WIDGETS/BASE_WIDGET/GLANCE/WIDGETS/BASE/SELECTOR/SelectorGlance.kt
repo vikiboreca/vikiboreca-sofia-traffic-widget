@@ -4,7 +4,6 @@ import androidx.core.content.edit
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.Log
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
@@ -14,9 +13,13 @@ import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.Switch
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -29,13 +32,19 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.AddStationActivity
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.EditStationButton
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class SelectorGlance: GlanceAppWidget() {
@@ -47,13 +56,10 @@ class SelectorGlance: GlanceAppWidget() {
             val prefs = currentState<Preferences>()
             val now = prefs[longPreferencesKey("now")]
             val chosenName = prefs[stringPreferencesKey("chosenStation")] ?: ""
-            val scope = rememberCoroutineScope()
 
             val list = getList(context)
             GlanceTheme{
                 Scaffold {
-                    //Text("${list.size}")
-
                     Column {
                         var itemCount = 0
                         val maxRows = 10
@@ -69,15 +75,23 @@ class SelectorGlance: GlanceAppWidget() {
                             val currentTarget = itemCount + rows
                             Column {
                                 for (j in itemCount until currentTarget) {
-                                    val pair = list[j]
                                     itemCount++
+                                    val pairAdvanced = list[j]
+                                    val pair = pairAdvanced.original
                                     Row(modifier = GlanceModifier.fillMaxWidth()){
-                                        Text(pair.Name)/*TODO(Make the text interactable to add counter station)*/
+                                        Text(pair.Name, style = TextStyle(fontWeight = FontWeight.Bold),
+                                                modifier = GlanceModifier.clickable(
+                                                    actionRunCallback<EditStationButton>(
+                                                        parameters = actionParametersOf(ActionParameters.Key<String>("StationPair") to "${pair.ID}\n${pair.Name}")
+                                                    )
+                                                )
+                                            )
                                         Row(modifier = GlanceModifier.defaultWeight(),horizontalAlignment = Alignment.End){
                                             Switch(
                                                 pair.Name == chosenName,
                                                 onCheckedChange = {
-                                                    scope.launch {
+                                                    CoroutineScope(Dispatchers.Default).launch {
+                                                        saveCurrentStation(context, pairAdvanced)
                                                         updateAppWidgetState(context, id){prefsState ->
                                                             val toRemember = prefsState[stringPreferencesKey("chosenStation")]
                                                             prefsState[stringPreferencesKey("chosenStation")] = if(toRemember!=pair.Name){pair.Name}else{""}
@@ -100,9 +114,12 @@ class SelectorGlance: GlanceAppWidget() {
                             Button(
                                 text = "Add station",
                                 onClick = actionStartActivity<AddStationActivity>(),
-                                style = TextStyle(fontSize = 18.sp)
+                                modifier = GlanceModifier.defaultWeight()
                             )
-                            Button("Clear List", onClick = {ClearList(context)})
+                            Button(
+                                text = "...",
+                                onClick = {ClearList(context)},
+                            )
                         }
                     }
                 }
@@ -115,14 +132,28 @@ class SelectorGlance: GlanceAppWidget() {
             remove("PairList")
         }
     }
-    private fun getList(context: Context):ArrayList<StationPair>{
+    private fun getList(context: Context):ArrayList<StationPairAdvanced>{
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         val gson = Gson()
 
         val listString = prefs.getString("PairList", null)
         if(!listString.isNullOrEmpty()){
-            return gson.fromJson(listString, object : TypeToken<ArrayList<StationPair>>() {}.type)
+            return gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
         }
         return ArrayList()
+    }
+    private fun saveCurrentStation(context: Context,pairAdvanced: StationPairAdvanced){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+
+        val pairTextOriginal = prefs.getString("activeStation", "null")
+
+        var pairText = gson.toJson(pairAdvanced)
+
+        if(pairText == pairTextOriginal) pairText = "null"
+        prefs.edit{
+            putString("activeStation", pairText)
+        }
+        //Log.d("nigger", pairText)
     }
 }
