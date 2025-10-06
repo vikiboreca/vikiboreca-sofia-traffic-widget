@@ -17,6 +17,7 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.Base_Glance
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,8 @@ class AddStationActivity: ComponentActivity() {
         var label by remember{mutableStateOf("Type Station ID")}
         var error by remember {mutableStateOf(false)}
 
+        val updater = WidgetUpdater(SelectorGlance::class.java)
+
             MaterialTheme {
                 Column(
                     modifier = Modifier.wrapContentSize(),
@@ -82,7 +85,6 @@ class AddStationActivity: ComponentActivity() {
                         else{
                             if(!text.isEmpty() && !listHasName(text)){
                                 StationLabel = text
-                                val updater = WidgetUpdater(SelectorGlance::class.java)
                                 saveToPreferences(ID, StationLabel)
                                 lifecycleScope.launch(Dispatchers.Default) {
                                     updater.updateWidget(this@AddStationActivity)
