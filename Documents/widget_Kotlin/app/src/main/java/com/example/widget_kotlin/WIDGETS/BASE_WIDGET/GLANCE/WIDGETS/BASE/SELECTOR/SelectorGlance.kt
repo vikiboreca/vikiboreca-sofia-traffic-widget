@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -18,7 +17,6 @@ import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.Switch
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.components.Scaffold
@@ -89,7 +87,7 @@ class SelectorGlance: GlanceAppWidget() {
                                                             ActionParameters.Key<String>("StationPair") to "${pair.ID}\n${pair.Name}"
                                                         )
                                                     )
-                                                )
+                                                ).padding(top = 4.dp)
                                         )
                                         Row(modifier = GlanceModifier.defaultWeight(),horizontalAlignment = Alignment.End){
                                             Switch(

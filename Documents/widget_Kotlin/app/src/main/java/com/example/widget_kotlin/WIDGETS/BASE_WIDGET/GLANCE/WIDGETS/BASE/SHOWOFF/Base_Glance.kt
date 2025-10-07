@@ -63,8 +63,8 @@ class Base_Glance : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Standard is 192 x 225 dp for 3 buses at 24 sp with max 16 chars (15 for safety)
-        val busList = getMemoryList(context, id)
         provideContent {
+            val busList = getMemoryList(context, id)
             val currentPair = getCurrentStationPair(context)
 
             val prefs = currentState<Preferences>()
@@ -78,15 +78,15 @@ class Base_Glance : GlanceAppWidget() {
             //val changePadding = ratio.width>ratio.height
 
 
-            Log.d("WidgetSize", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
+            //Log.d("nigger", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
 
             GlanceTheme {
                 Scaffold(
                     titleBar = {
-                        val text = currentPair?.original?.Name ?: "not selected"
+                        val text = currentPair?.original?.Name ?: "Not selected"
                         TitleBar(
                             startIcon = ImageProvider(R.drawable.app_widget_background),
-                            title = "Current Station: $text"
+                            title = text
                         )
                     }
                 ) {

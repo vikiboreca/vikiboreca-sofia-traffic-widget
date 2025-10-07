@@ -11,6 +11,6 @@ class ActivityStarter(val activityClass: Class<out ComponentActivity>){
             flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
         }
         context.startActivity(intent)
-         Log.d("nigger", "startedActivity")
+         Log.d("nigger", "startedActivity of type ${activityClass.simpleName}")
     }
 }

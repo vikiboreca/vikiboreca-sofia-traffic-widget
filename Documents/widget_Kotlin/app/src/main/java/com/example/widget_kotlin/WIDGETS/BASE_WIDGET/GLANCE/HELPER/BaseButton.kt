@@ -19,6 +19,7 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
@@ -34,11 +35,11 @@ class BaseButton : ActionCallback {
     val updater = WidgetUpdater(Base_Glance::class.java)
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val currentPair = getCurrentStationPair(context)
-        Log.d("nigger", currentPair.toString())
         if(currentPair!=null){
             try {
                 val map = getMap(context,currentPair.original.ID)
                 saveListMemory(context, map, glanceId)
+                delay(200)
                 updater.updateWidget(context)
             } catch (e: Exception) {
                 Log.d("widget error", e.toString())
@@ -119,10 +120,10 @@ class BaseButton : ActionCallback {
         }
 
     private fun saveListMemory(context: Context, map: Map<Bus, ArrayList<ArriveTime>>, glanceId: GlanceId) {
-        val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         val gson = GsonBuilder().create()
         val list = map.map { (bus, arrivals) -> BusEntry(bus, arrivals) }
-        prefs.edit { putString("bus_list$glanceId", gson.toJson(list)).apply() }
+        prefs.edit { putString("bus_list$glanceId", gson.toJson(list))}
     }
 
     private fun isLastStation(bus:Bus, map:Map<String, List<String>>):Boolean{
@@ -159,12 +160,12 @@ class BaseButton : ActionCallback {
     }
     private fun saveToPreferences(context:Context, tag:String, widgetID:Int?, value:Any){
         val IDText = if(widgetID!=null){"$widgetID"}else{""}
-        val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         prefs.edit{putString("memory $tag $IDText", "$value")}
     }
     private fun getFromPreferences(context:Context, tag:String, widgetID:Int?, default:String):String?{
         val IDText = if(widgetID!=null){"$widgetID"}else{""}
-        val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         return prefs.getString("memory $tag $IDText", default)
     }
     private fun getCurrentStationPair(context: Context): StationPairAdvanced?{
