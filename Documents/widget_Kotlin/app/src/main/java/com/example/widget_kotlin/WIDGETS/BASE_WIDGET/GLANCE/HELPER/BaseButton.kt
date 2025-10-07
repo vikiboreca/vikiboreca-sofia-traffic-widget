@@ -1,6 +1,7 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER
 
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.res.AssetManager
 import android.util.Log
 import androidx.core.content.edit
@@ -11,8 +12,11 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.BusEntry
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.Base_Glance
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -27,13 +31,18 @@ import okio.IOException
 
 class BaseButton : ActionCallback {
     var CurrentStationID:String = ""
+    val updater = WidgetUpdater(Base_Glance::class.java)
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        try {
-            val map = getMap(context,"0603")
-            saveListMemory(context, map, glanceId)
-            Base_Glance().update(context, glanceId)
-        } catch (e: Exception) {
-            Log.d("widget error", e.toString())
+        val currentPair = getCurrentStationPair(context)
+        Log.d("nigger", currentPair.toString())
+        if(currentPair!=null){
+            try {
+                val map = getMap(context,currentPair.original.ID)
+                saveListMemory(context, map, glanceId)
+                updater.updateWidget(context)
+            } catch (e: Exception) {
+                Log.d("widget error", e.toString())
+            }
         }
     }
 
@@ -157,5 +166,12 @@ class BaseButton : ActionCallback {
         val IDText = if(widgetID!=null){"$widgetID"}else{""}
         val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
         return prefs.getString("memory $tag $IDText", default)
+    }
+    private fun getCurrentStationPair(context: Context): StationPairAdvanced?{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val pairTextOriginal = prefs.getString("activeStation", "null")
+        if(pairTextOriginal == "null") return null
+        return gson.fromJson(pairTextOriginal, object : TypeToken<StationPairAdvanced>() {}.type)
     }
 }

@@ -45,13 +45,13 @@ class AddStationActivity: ComponentActivity() {
     @Composable
     private fun InputScreen(){
 
+        val updater = WidgetUpdater(SelectorGlance::class.java)
+        val updaterBase = WidgetUpdater(Base_Glance::class.java)
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}
         var label by remember{mutableStateOf("Type Station ID")}
         var error by remember {mutableStateOf(false)}
-
-        val updater = WidgetUpdater(SelectorGlance::class.java)
 
             MaterialTheme {
                 Column(

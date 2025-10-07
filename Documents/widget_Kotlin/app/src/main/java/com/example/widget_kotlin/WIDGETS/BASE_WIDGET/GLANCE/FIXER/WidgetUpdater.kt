@@ -43,7 +43,6 @@ class WidgetUpdater(val widgetClass: Class<out GlanceAppWidget>)  {
             forceUpdateWidget(context)
             Log.d("nigger", "${widgetClass.simpleName}  force update")
         }
-
         setForce(context, true)
         timeManager.startForClass(widgetClass, 30000, {setForce(context, false)})
     }

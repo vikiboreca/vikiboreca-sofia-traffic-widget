@@ -18,6 +18,7 @@ import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.Switch
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.components.Scaffold
@@ -44,19 +45,20 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SelectorGlance: GlanceAppWidget() {
 
     override var stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
     val updater = WidgetUpdater(SelectorGlance::class.java)
+    val basicUpdater = WidgetUpdater(Base_Glance::class.java)
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
             val prefs = currentState<Preferences>()
             val now = prefs[longPreferencesKey("now")]
             val chosenName = prefs[stringPreferencesKey("chosenStation")] ?: ""
 
-            val basicUpdater = WidgetUpdater(Base_Glance::class.java)
 
             val list = getList(context)
             GlanceTheme{
@@ -81,13 +83,13 @@ class SelectorGlance: GlanceAppWidget() {
                                     val pair = pairAdvanced.original
                                     Row(modifier = GlanceModifier.fillMaxWidth()){
                                         Text(pair.Name, style = TextStyle(fontWeight = FontWeight.Bold),
-                                                modifier = GlanceModifier.clickable {
+                                                modifier = GlanceModifier.clickable(
                                                     actionRunCallback<EditStationButton>(
                                                         parameters = actionParametersOf(
                                                             ActionParameters.Key<String>("StationPair") to "${pair.ID}\n${pair.Name}"
                                                         )
                                                     )
-                                                }
+                                                )
                                         )
                                         Row(modifier = GlanceModifier.defaultWeight(),horizontalAlignment = Alignment.End){
                                             Switch(
@@ -100,6 +102,7 @@ class SelectorGlance: GlanceAppWidget() {
                                                             prefsState[stringPreferencesKey("chosenStation")] = if(toRemember!=pair.Name){pair.Name}else{""}
                                                         }
                                                         updater.updateWidget(context)
+                                                        delay(500)
                                                         basicUpdater.updateWidget(context)
                                                     }
                                                 }

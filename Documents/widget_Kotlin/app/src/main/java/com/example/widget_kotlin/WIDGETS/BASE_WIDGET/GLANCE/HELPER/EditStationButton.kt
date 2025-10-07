@@ -7,13 +7,11 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.core.content.edit
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.EditStationActivity
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.PopUpActivity
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 
 class EditStationButton: ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val pairText = parameters[ActionParameters.Key<String>("StationPair")]
-        Log.d("nigger", pairText.toString())
         var ID: String = ""
         var Name: String = ""
         if(!pairText.isNullOrEmpty()){

@@ -1,6 +1,7 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF
 
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
@@ -41,9 +42,12 @@ import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.PopUpButton
+import com.google.gson.Gson
 import kotlin.math.abs
 import kotlin.math.floor
 
@@ -61,6 +65,8 @@ class Base_Glance : GlanceAppWidget() {
         // Standard is 192 x 225 dp for 3 buses at 24 sp with max 16 chars (15 for safety)
         val busList = getMemoryList(context, id)
         provideContent {
+            val currentPair = getCurrentStationPair(context)
+
             val prefs = currentState<Preferences>()
             val now = prefs[longPreferencesKey("now")]
 
@@ -77,9 +83,10 @@ class Base_Glance : GlanceAppWidget() {
             GlanceTheme {
                 Scaffold(
                     titleBar = {
+                        val text = currentPair?.original?.Name ?: "not selected"
                         TitleBar(
                             startIcon = ImageProvider(R.drawable.app_widget_background),
-                            title = "Welcome, nigger"
+                            title = "Current Station: $text"
                         )
                     }
                 ) {
@@ -188,6 +195,14 @@ class Base_Glance : GlanceAppWidget() {
             Log.d("widget error", e.toString())
             arrayListOf()
         }
+    }
+
+    private fun getCurrentStationPair(context: Context): StationPairAdvanced?{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val pairTextOriginal = prefs.getString("activeStation", "null")
+        if(pairTextOriginal == "null") return null
+        return gson.fromJson(pairTextOriginal, object : TypeToken<StationPairAdvanced>() {}.type)
     }
 
     private fun setScale(busList: List<BusEntry>, Scaling: DpSize, Standard:DpSize): Float {
