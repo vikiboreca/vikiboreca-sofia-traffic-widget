@@ -15,7 +15,7 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.Base_Glance
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -32,7 +32,7 @@ import okio.IOException
 
 class BaseButton : ActionCallback {
     var CurrentStationID:String = ""
-    val updater = WidgetUpdater(Base_Glance::class.java)
+    val updater = WidgetUpdater(BaseGlance::class.java)
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val currentPair = getCurrentStationPair(context)
         if(currentPair!=null){

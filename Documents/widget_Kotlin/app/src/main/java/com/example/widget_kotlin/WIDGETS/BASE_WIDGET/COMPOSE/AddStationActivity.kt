@@ -1,9 +1,7 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
-import android.annotation.SuppressLint
 import androidx.core.content.edit
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -17,12 +15,10 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.Base_Glance
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Call
 import okhttp3.Callback
@@ -46,7 +42,7 @@ class AddStationActivity: ComponentActivity() {
     private fun InputScreen(){
 
         val updater = WidgetUpdater(SelectorGlance::class.java)
-        val updaterBase = WidgetUpdater(Base_Glance::class.java)
+        val updaterBase = WidgetUpdater(BaseGlance::class.java)
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}

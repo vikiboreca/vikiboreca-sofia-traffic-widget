@@ -5,21 +5,21 @@ import androidx.core.content.edit
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 
-class Base_Glance_Receiver() : GlanceAppWidgetReceiver()
+class BaseGlanceReceiver() : GlanceAppWidgetReceiver()
 {
     override val glanceAppWidget: GlanceAppWidget
-        get() = Base_Glance()
+        get() = BaseGlance()
 
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         super.onDeleted(context, appWidgetIds)
-        ClearList(context, appWidgetIds)
+        clearList(context, appWidgetIds)
     }
-    private fun ClearList(context: Context?, ids: IntArray) {
+    private fun clearList(context: Context?, ids: IntArray) {
         val busPreference = context?.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
         busPreference?.edit {
             for(id in ids){
-                remove("bus_list$id").apply()
+                remove("bus_list$id")
             }
         }
     }

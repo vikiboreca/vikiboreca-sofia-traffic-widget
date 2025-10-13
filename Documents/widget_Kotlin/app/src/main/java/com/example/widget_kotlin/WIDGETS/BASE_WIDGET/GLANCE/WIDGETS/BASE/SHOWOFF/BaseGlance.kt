@@ -3,6 +3,7 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOF
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.Log
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -33,13 +34,20 @@ import androidx.glance.LocalSize
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.background
 import androidx.glance.color.ColorProvider
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.glance.text.FontWeight
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
@@ -51,12 +59,14 @@ import com.google.gson.Gson
 import kotlin.math.abs
 import kotlin.math.floor
 
-class Base_Glance : GlanceAppWidget() {
+class BaseGlance : GlanceAppWidget() {
     override val sizeMode: SizeMode
         get() = SizeMode.Exact
 
     var smallerButtons:Boolean = false
     val defaultColor = ColorProvider(Color.Black, Color.White)
+
+    val reverseDefaultColor = ColorProvider(Color.White, Color.Black)
     val textSizeDefault = 24
 
     override var stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
@@ -109,13 +119,7 @@ class Base_Glance : GlanceAppWidget() {
                                     val arrivals = busList[j].arrivals
                                     itemCount++
                                     Row {
-                                        Text(
-                                            text = bus.name,
-                                            style = TextStyle(fontSize = textSizeDefault.spScaled(scale)),
-                                            modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
-                                                parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to getTypeName(context, bus))
-                                            ))
-                                        )
+                                        BusBox(bus, scale, context)
                                         Text(
                                             " - ",
                                             style = TextStyle(
@@ -132,10 +136,10 @@ class Base_Glance : GlanceAppWidget() {
                                                         style = TextStyle(fontSize = textSizeDefault.spScaled(scale), color = colorState),
                                                         modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
                                                             parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to arrivals[index].lastStation,
-                                                            ActionParameters.Key<String>("busStop") to arrivals[index].realLastStation,
+                                                                ActionParameters.Key<String>("busStop") to arrivals[index].realLastStation,
                                                                 ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString())
                                                         )
-                                                    )
+                                                        )
                                                     )
                                                     if (index != arrivals.size - 1) {
                                                         Text(
@@ -146,6 +150,8 @@ class Base_Glance : GlanceAppWidget() {
                                                 }
                                             }
                                     }
+                                    //TODO("I cross the check for too much components in a column by adding a spacer")
+                                    //Spacer(modifier = GlanceModifier.height(2.dpScaled(scale)))
                                 }
                             }
                         }
@@ -206,8 +212,8 @@ class Base_Glance : GlanceAppWidget() {
     }
 
     private fun setScale(busList: List<BusEntry>, Scaling: DpSize, Standard:DpSize): Float {
-        val maxChars = 9f
-        val maxRows = 3f
+        val maxChars = 8.5f
+        val maxRows = 2.5f
 
         val value = maxChars * Scaling.width.value
         //val maxLength = floor(value)
@@ -245,4 +251,15 @@ class Base_Glance : GlanceAppWidget() {
     // Helper functions to scale dp and sp
     fun Int.dpScaled(scale: Float) = (this * scale).dp
     fun Int.spScaled(scale: Float) = (this * scale).sp
+
+    @Composable
+    private fun BusBox(bus:Bus, scale: Float, context: Context){
+        Box(modifier = GlanceModifier.background(Color.Red).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 1.dp)){
+            Text(text = bus.name,
+                style = TextStyle(fontSize = textSizeDefault.spScaled(scale*0.9f), color = reverseDefaultColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
+                modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
+                    parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to getTypeName(context, bus))
+                )))
+        }
+    }
 }
