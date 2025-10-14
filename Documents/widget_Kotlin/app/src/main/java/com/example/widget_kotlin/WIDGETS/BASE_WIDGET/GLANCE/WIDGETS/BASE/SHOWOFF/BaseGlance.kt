@@ -85,6 +85,8 @@ class BaseGlance : GlanceAppWidget() {
             val ratio = DpSize((size.width / standard.width).dp, (size.height / standard.height).dp)
             var scale = setScale(busList, ratio, size)
             if(busList.isEmpty()){scale = 1f}
+
+            val isMetroStation = busList[0].bus.name.startsWith("M")
             //val changePadding = ratio.width>ratio.height
 
 
@@ -100,7 +102,7 @@ class BaseGlance : GlanceAppWidget() {
                         )
                     }
                 ) {
-                    Column {
+                    Column { 
                         var itemCount = 0
                         val maxRows = 10
                         var rowsLeft = busList.size
@@ -114,44 +116,53 @@ class BaseGlance : GlanceAppWidget() {
                             }
                             val currentTarget = itemCount + rows
                             Column {
+                                var spacerSpace = 4
+                                if(busList.size>10 && (size.height.value/100).toInt() == 2) spacerSpace = 1
                                 for (j in itemCount until currentTarget) {
                                     val bus = busList[j].bus
                                     val arrivals = busList[j].arrivals
-                                    itemCount++
-                                    Row {
-                                        BusBox(bus, scale, context)
-                                        Text(
-                                            " - ",
-                                            style = TextStyle(
-                                                fontSize = textSizeDefault.spScaled(scale),
-                                                color = defaultColor
+                                    val content: @Composable () -> Unit = {
+                                        Row {
+                                            BusBox(bus, scale, context)
+                                            Text(
+                                                " - ",
+                                                style = TextStyle(
+                                                    fontSize = textSizeDefault.spScaled(scale),
+                                                    color = defaultColor
+                                                )
                                             )
-                                        )
-                                        arrivals.map(ArriveTime::minutes)
-                                            .forEachIndexed { index, minutes ->
-                                                val colorState = if(arrivals[index].isLastStation){defaultColor}else{ColorProvider(Color.Red, Color.Red)}
-                                                Row {
-                                                    Text(
-                                                        minutes.toString(),
-                                                        style = TextStyle(fontSize = textSizeDefault.spScaled(scale), color = colorState),
-                                                        modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
-                                                            parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to arrivals[index].lastStation,
-                                                                ActionParameters.Key<String>("busStop") to arrivals[index].realLastStation,
-                                                                ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString())
-                                                        )
-                                                        )
-                                                    )
-                                                    if (index != arrivals.size - 1) {
+                                            arrivals.map(ArriveTime::minutes)
+                                                .forEachIndexed { index, minutes ->
+                                                    val colorState = if(arrivals[index].isLastStation){defaultColor}else{ColorProvider(Color.Red, Color.Red)}
+                                                    Row {
                                                         Text(
-                                                            ", ",
-                                                            style = TextStyle(fontSize = textSizeDefault.spScaled(scale))
+                                                            minutes.toString(),
+                                                            style = TextStyle(fontSize = textSizeDefault.spScaled(scale), color = colorState),
+                                                            modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
+                                                                parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to arrivals[index].lastStation,
+                                                                    ActionParameters.Key<String>("busStop") to arrivals[index].realLastStation,
+                                                                    ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString())
+                                                            )
+                                                            )
                                                         )
+                                                        if (index != arrivals.size - 1) {
+                                                            Text(
+                                                                ", ",
+                                                                style = TextStyle(fontSize = textSizeDefault.spScaled(scale))
+                                                            )
+                                                        }
                                                     }
                                                 }
-                                            }
+                                        }
                                     }
-                                    //TODO("I cross the check for too much components in a column by adding a spacer")
-                                    //Spacer(modifier = GlanceModifier.height(2.dpScaled(scale)))
+                                    val spacer: @Composable () -> Unit = {
+                                        Spacer(modifier = GlanceModifier.height(spacerSpace.dpScaled(scale)))
+                                    }
+                                    Column{
+                                        content()
+                                        spacer()
+                                    }
+                                    itemCount++
                                 }
                             }
                         }
@@ -234,7 +245,7 @@ class BaseGlance : GlanceAppWidget() {
 
         Log.d("comparing", "$xScale $yScale")
         var finalScale = minOf(xScale, yScale)
-        val xMax = Scaling.width.value*1.2f
+        val xMax = Scaling.width.value*1.125f
         finalScale = finalScale.coerceAtMost(xMax)
         smallerButtons = abs(xScale-yScale)<0.1f
         return finalScale
@@ -254,12 +265,35 @@ class BaseGlance : GlanceAppWidget() {
 
     @Composable
     private fun BusBox(bus:Bus, scale: Float, context: Context){
-        Box(modifier = GlanceModifier.background(Color.Red).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 1.dp)){
+        Box(modifier = GlanceModifier.background(busColor(bus)).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 1.dp)
+            .clickable(actionRunCallback<PopUpButton>(
+                parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to getTypeName(context, bus))
+            ))){
             Text(text = bus.name,
-                style = TextStyle(fontSize = textSizeDefault.spScaled(scale*0.9f), color = reverseDefaultColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
-                modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
-                    parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to getTypeName(context, bus))
-                )))
+                style = TextStyle(fontSize = textSizeDefault.spScaled(scale*0.9f), color = reverseDefaultColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            )
+        }
+    }
+    private fun busColor(bus:Bus):Color{
+        return when(bus.type){
+            1 -> Color(0xFFC70039)
+            2 -> Color(0xFFF59223)
+            4 -> Color(0xFF26A6D2)
+            5 -> Color.Black
+            else -> {
+                val metroNumber = bus.name[1] - '0'
+                return when(metroNumber){
+                    1 -> Color(0xFFE4002B)
+                    2 -> Color(0xFF003D79)
+                    3 -> Color(0xFF4D9747)
+                    4 -> Color(0xFFFED700)
+                    else -> {
+                        Log.d("nigger", "number Color Problem")
+                        Color.Transparent //nigga what
+                    }
+                }
+
+            }
         }
     }
 }

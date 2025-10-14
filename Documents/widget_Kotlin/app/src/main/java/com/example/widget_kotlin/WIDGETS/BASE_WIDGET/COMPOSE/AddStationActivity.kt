@@ -100,7 +100,7 @@ class AddStationActivity: ComponentActivity() {
             }
     }
     private fun IsIDValid(id:String, onValid:()->Unit, onError:()->Unit){
-        if(id.length!=4) {runOnUiThread { onError();}; return}
+        if(id.isEmpty() || id.length>4) {runOnUiThread { onError();}; return}
         id.forEach { it ->
             if(!it.isDigit()) {runOnUiThread { onError();}; return}
         }
