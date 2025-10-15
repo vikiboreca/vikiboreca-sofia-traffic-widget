@@ -54,13 +54,16 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.MetroEntry
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.PopUpButton
 import com.google.gson.Gson
+import java.util.stream.Collectors
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.streams.toList
 
 class BaseGlance : GlanceAppWidget() {
     override val sizeMode: SizeMode
@@ -78,7 +81,7 @@ class BaseGlance : GlanceAppWidget() {
         // Standard is 192 x 225 dp for 3 buses at 24 sp with max 16 chars (15 for safety)
         provideContent {
             val busList = getMemoryList(context, id)
-            val metroList = getMetroList(busList)
+            val metroList = getMetroList(context, busList)
             val currentPair = getCurrentStationPair(context)
 
             val prefs = currentState<Preferences>()
@@ -227,12 +230,21 @@ class BaseGlance : GlanceAppWidget() {
         }
     }
 
-    private fun getMetroList(list:ArrayList<BusEntry>):ArrayList<MetroEntry>{
+    private fun getMetroList(context: Context,list:ArrayList<BusEntry>):ArrayList<MetroEntry>{
         val metroList:ArrayList<MetroEntry> = ArrayList()
         if(list.isEmpty()) return metroList
         if(list[0].bus.type != 3) return metroList
+        val metroStations = getMetroStations(context)
         list.forEach { it ->
-            /*TODO("get the last stations based on the metro name")*/
+            val pair = getMetroStationEndStops(metroStations, it.bus.name)
+            if(it.bus.name == "M1" || it.bus.name == "M4"){
+                it.arrivals.forEach {
+                    if(it.lastStation == "Витоша") it.lastStation = "Сливница"
+                }
+            }
+            val listA = it.arrivals.stream().filter{it.lastStation == pair.first}.collect(Collectors.toCollection {ArrayList()})
+            val listB = it.arrivals.stream().filter{it.lastStation == pair.second}.collect(Collectors.toCollection {ArrayList()})
+            //val metroEntry = MetroEntry(it.bus.name, listA, listB)
         }
         return metroList
     }
@@ -286,6 +298,19 @@ class BaseGlance : GlanceAppWidget() {
     fun Int.dpScaled(scale: Float) = (this * scale).dp
     fun Int.spScaled(scale: Float) = (this * scale).sp
 
+    private fun getMetroStations(context:Context): StationAdvanced{
+        val assetManager = context.assets
+        val listText = assetManager.open("метро.json").bufferedReader().use{it.readText()}
+        val gson = Gson()
+        val listType = object : TypeToken<StationAdvanced>() {}.type
+        return gson.fromJson(listText, listType)
+    }
+
+    private fun getMetroStationEndStops(list: StationAdvanced, lineName:String):Pair<String, String>{
+        val index = lineName[lineName.lastIndex] - '0'
+        val station = list.lines[index]
+        return Pair(station.stops[0], station.stops[1])
+    }
     //New functions
     @Composable
     private fun BusBox(bus:Bus, scale: Float, context: Context){
