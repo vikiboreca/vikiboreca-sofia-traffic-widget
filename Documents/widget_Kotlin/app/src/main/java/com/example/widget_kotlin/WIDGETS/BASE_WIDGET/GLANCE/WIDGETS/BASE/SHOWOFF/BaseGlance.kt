@@ -41,6 +41,7 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -53,6 +54,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.MetroArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.MetroEntry
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
@@ -63,7 +65,6 @@ import com.google.gson.Gson
 import java.util.stream.Collectors
 import kotlin.math.abs
 import kotlin.math.floor
-import kotlin.streams.toList
 
 class BaseGlance : GlanceAppWidget() {
     override val sizeMode: SizeMode
@@ -83,6 +84,7 @@ class BaseGlance : GlanceAppWidget() {
             val busList = getMemoryList(context, id)
             val metroList = getMetroList(context, busList)
             val currentPair = getCurrentStationPair(context)
+            val isMetroStation = !metroList.isEmpty()
 
             val prefs = currentState<Preferences>()
             val now = prefs[longPreferencesKey("now")]
@@ -90,10 +92,9 @@ class BaseGlance : GlanceAppWidget() {
             val standard = DpSize(192.dp, 225.dp)
             val size = LocalSize.current
             val ratio = DpSize((size.width / standard.width).dp, (size.height / standard.height).dp)
-            var scale = setScale(busList, ratio, size)
+            Log.d("nigger", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
+            var scale = if(isMetroStation){setScale(metroList, ratio, size)}else{setScale(busList, ratio, size)}
             if(busList.isEmpty()){scale = 1f}
-
-            val isMetroStation = !metroList.isEmpty()
 
             val busDisplay: @Composable () -> Unit = {
                 Column {
@@ -163,23 +164,21 @@ class BaseGlance : GlanceAppWidget() {
                 }
             }
             val metroDisplay: @Composable () -> Unit = {
-
+                Column{
+                    metroList.forEachIndexed { index, it ->
+                        Row{
+                            BusBox(it.metro, scale)
+                        }
+                    }
+                }
             }
-            val contentDisplay = if(isMetroStation) {metroDisplay}else{busDisplay}
-            //val changePadding = ratio.width>ratio.height
+            val contentDisplay = if(isMetroStation){metroDisplay}else{busDisplay}
 
-
-            //Log.d("nigger", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
 
             GlanceTheme {
                 Scaffold(
                     titleBar = {
                         val text = currentPair?.original?.Name ?: "Not selected"
-//                        TitleBar(
-//                            startIcon = ImageProvider(R.drawable.app_widget_background),
-//                            title = text,
-//                            style = TextStyle(fontSize = textSizeDefault)
-//                        )
                         CustomTitleBar(text)
                     }
                 ) {
@@ -235,17 +234,25 @@ class BaseGlance : GlanceAppWidget() {
         if(list.isEmpty()) return metroList
         if(list[0].bus.type != 3) return metroList
         val metroStations = getMetroStations(context)
-        list.forEach { it ->
-            val pair = getMetroStationEndStops(metroStations, it.bus.name)
-            if(it.bus.name == "M1" || it.bus.name == "M4"){
-                it.arrivals.forEach {
-                    if(it.lastStation == "Витоша") it.lastStation = "Сливница"
-                }
+        val assign: (list: List<ArriveTime>, checkStation:String,lastStation:String, realLastStation:String) -> Unit =
+            {
+                list, checkStation ,lastStation, realLastStation ->
+                list.forEach { arriveTime -> if(arriveTime.lastStation == checkStation){arriveTime.realLastStation = realLastStation; arriveTime.lastStation = lastStation} }
             }
-            val listA = it.arrivals.stream().filter{it.lastStation == pair.first}.collect(Collectors.toCollection {ArrayList()})
-            val listB = it.arrivals.stream().filter{it.lastStation == pair.second}.collect(Collectors.toCollection {ArrayList()})
-            //val metroEntry = MetroEntry(it.bus.name, listA, listB)
+        list.forEach { it ->
+            val listArr = it.arrivals
+            when((it.bus.name[1]-'0')){
+                1 -> assign(listArr, "Витоша", "Сливница", "Сливница")
+                2 -> assign(listArr, "Бизнес парк", "Обеля", "Обеля")
+                4 -> assign(listArr, "Витоша", "Обеля", "Сливница")
+            }
+            val pair = getMetroStationEndStops(metroStations, it.bus.name)
+            val listA = it.arrivals.stream().filter{arr -> arr.realLastStation == pair.first}.map{arr-> MetroArriveTime(arr.minutes,arr.lastStation, arr.realLastStation) }.limit(3).collect(Collectors.toCollection {ArrayList()})
+            val listB = it.arrivals.stream().filter{arr -> arr.realLastStation == pair.second}.map{arr-> MetroArriveTime(arr.minutes,arr.lastStation, arr.realLastStation) }.limit(3).collect(Collectors.toCollection {ArrayList()})
+            val metroEntry = MetroEntry(it.bus.name, listA, listB)
+            metroList.add(metroEntry)
         }
+        metroList.sortBy { it-> it.metro[1]-'0' }
         return metroList
     }
 
@@ -257,9 +264,9 @@ class BaseGlance : GlanceAppWidget() {
         return gson.fromJson(pairTextOriginal, object : TypeToken<StationPairAdvanced>() {}.type)
     }
 
-    private fun setScale(busList: List<BusEntry>, Scaling: DpSize, Standard:DpSize): Float {
+    private fun setScale(busList: ArrayList<BusEntry>, Scaling: DpSize, Standard:DpSize): Float {
         val maxChars = 8.5f
-        val maxRows = 2.5f
+        val maxRows = 3.5f
 
         val value = maxChars * Scaling.width.value
         //val maxLength = floor(value)
@@ -271,7 +278,7 @@ class BaseGlance : GlanceAppWidget() {
             if (curr > maxStringLength) maxStringLength = curr
         }
 
-        val maxItems = (maxRows * ((Standard.height.value/100)-1))
+        val maxItems = (maxRows * ((Standard.height.value/100)-1).toInt())
         val curr = 1f / maxItems
         val now = 1f / busList.size
 
@@ -281,6 +288,36 @@ class BaseGlance : GlanceAppWidget() {
         Log.d("comparing", "$xScale $yScale")
         var finalScale = minOf(xScale, yScale)
         val xMax = Scaling.width.value*1.125f
+        finalScale = finalScale.coerceAtMost(xMax)
+        smallerButtons = abs(xScale-yScale)<0.1f
+        return finalScale
+    }
+    private fun setScale(metroEntries: List<MetroEntry>, Scaling: DpSize, Standard:DpSize): Float {
+        val maxChars = 8f
+        val maxRows = 4f
+
+        val xValue = maxChars * Scaling.width.value
+        //val maxLength = floor(value)
+        var maxStringLength = 1
+        metroEntries.forEach { it ->
+            val currWidthA = it.direction.sumOf { dir -> dir.minutes.toString().length } + it.metro.length
+            val currWidthB = it.oppDirection.sumOf { dir -> dir.minutes.toString().length } + it.metro.length
+            val maxLength = maxOf(currWidthA, currWidthB)
+            if(maxLength>maxStringLength) maxStringLength = maxLength
+        }
+
+        val maxItems = (maxRows * ((Standard.height.value/100)-1).toInt())
+
+        val curr = 1f / maxItems
+        val now = 1f / (metroEntries.size*2f)
+
+        //Log.d("nigger", "${metroEntries.size} $maxItems $curr $now")
+        val xScale = xValue / maxStringLength
+        val yScale = 1 / (curr / now)
+
+        //Log.d("nigger", "$xScale $yScale")
+        var finalScale = minOf(xScale, yScale)
+        val xMax = Scaling.width.value*1.15f
         finalScale = finalScale.coerceAtMost(xMax)
         smallerButtons = abs(xScale-yScale)<0.1f
         return finalScale
@@ -307,8 +344,7 @@ class BaseGlance : GlanceAppWidget() {
     }
 
     private fun getMetroStationEndStops(list: StationAdvanced, lineName:String):Pair<String, String>{
-        val index = lineName[lineName.lastIndex] - '0'
-        val station = list.lines[index]
+        val station = list.lines.stream().filter {line-> line.name == lineName}.findFirst().orElse(null)
         return Pair(station.stops[0], station.stops[1])
     }
     //New functions
@@ -323,6 +359,17 @@ class BaseGlance : GlanceAppWidget() {
             )
         }
     }
+    @Composable
+    private fun BusBox(metroName:String, scale: Float){
+        Box(modifier = GlanceModifier.background(busColor(metroName[1]-'0')).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 1.dp)
+            .clickable(actionRunCallback<PopUpButton>(
+                parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to "метро")
+            ))){
+            Text(text = metroName,
+                style = TextStyle(fontSize = textSizeDefault.spScaled(scale*0.75f), color = reverseDefaultColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            )
+        }
+    }
     private fun busColor(bus:Bus):Color{
         return when(bus.type){
             1 -> Color(0xFFC70039)
@@ -331,17 +378,19 @@ class BaseGlance : GlanceAppWidget() {
             5 -> Color.Black
             else -> {
                 val metroNumber = bus.name[1] - '0'
-                return when(metroNumber){
-                    1 -> Color(0xFFE4002B)
-                    2 -> Color(0xFF003D79)
-                    3 -> Color(0xFF4D9747)
-                    4 -> Color(0xFFFED700)
-                    else -> {
-                        Log.d("nigger", "number Color Problem")
-                        Color.Transparent //nigga what
-                    }
-                }
-
+                busColor(metroNumber)
+            }
+        }
+    }
+    private fun busColor(num:Int):Color{
+        return when(num){
+            1 -> Color(0xFFE4002B)
+            2 -> Color(0xFF003D79)
+            3 -> Color(0xFF4D9747)
+            4 -> Color(0xFFF59223)
+            else -> {
+                Log.d("nigger", "number Color Problem")
+                Color.Transparent //nigga what
             }
         }
     }
@@ -367,7 +416,7 @@ class BaseGlance : GlanceAppWidget() {
                 style = TextStyle(
                     fontSize = 20.spScaled(scale),
                     color = defaultColor,
-                    fontWeight = FontWeight.Normal
+                    fontWeight = FontWeight.Bold
                 )
             )
         }
