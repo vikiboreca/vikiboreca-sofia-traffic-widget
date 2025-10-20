@@ -164,10 +164,29 @@ class BaseGlance : GlanceAppWidget() {
                 }
             }
             val metroDisplay: @Composable () -> Unit = {
-                Column{
-                    metroList.forEachIndexed { index, it ->
-                        Row{
-                            BusBox(it.metro, scale)
+                Column(modifier = GlanceModifier.fillMaxSize(), Alignment.Top){
+                    if(metroList.size%2 == 1){
+                        Column{
+                            Row{
+                                Column(GlanceModifier.padding(top = 15.dp)){
+                                    BusBox(metroList[0].metro, scale)
+                                }
+                                DisplayMetroStations(metroList[0], 26)
+                            }
+                        }
+
+                    }
+                    else{
+                        Column{
+                            metroList.forEachIndexed { index, entry ->
+                                val space = (index)*50
+                                Row(GlanceModifier.padding(top = space.dp)){
+                                    Column(GlanceModifier.padding(top = 15.dp)){
+                                        BusBox(entry.metro, scale)
+                                    }
+                                    DisplayMetroStations(entry, 26)
+                                }
+                            }
                         }
                     }
                 }
@@ -194,17 +213,10 @@ class BaseGlance : GlanceAppWidget() {
                         if(floor(size.width.value) == floor(standard.width.value) || floor(size.height.value) == floor(standard.height.value)) buttonSize = 18.sp
                         //buttonSize = buttonSize.value.coerceAtMost(18f).sp
                         Row(modifier = GlanceModifier.padding(bottom = buttonsPadding.dpScaled(scale))) {
-                            Row(modifier = GlanceModifier.padding(end = 6.dp)) {
+                            Row(modifier = GlanceModifier.padding(start = 80.dp)) {
                                 Button(
-                                    text = "Good",
+                                    text = "",
                                     onClick = actionRunCallback<BaseButton>(),
-                                    style = TextStyle(fontSize = buttonSize)
-                                )
-                            }
-                            Row(modifier = GlanceModifier.padding(start = 6.dp)) {
-                                Button(
-                                    text = "Clear",
-                                    onClick = actionRunCallback<ActionCallback>(),
                                     style = TextStyle(fontSize = buttonSize)
                                 )
                             }
@@ -350,7 +362,7 @@ class BaseGlance : GlanceAppWidget() {
     //New functions
     @Composable
     private fun BusBox(bus:Bus, scale: Float, context: Context){
-        Box(modifier = GlanceModifier.background(busColor(bus)).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 1.dp)
+        Box(modifier = GlanceModifier.background(busColor(bus)).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 3.dp)
             .clickable(actionRunCallback<PopUpButton>(
                 parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to getTypeName(context, bus))
             ))){
@@ -361,13 +373,16 @@ class BaseGlance : GlanceAppWidget() {
     }
     @Composable
     private fun BusBox(metroName:String, scale: Float){
-        Box(modifier = GlanceModifier.background(busColor(metroName[1]-'0')).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 1.dp)
-            .clickable(actionRunCallback<PopUpButton>(
-                parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to "метро")
-            ))){
-            Text(text = metroName,
-                style = TextStyle(fontSize = textSizeDefault.spScaled(scale*0.75f), color = reverseDefaultColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            )
+        Row{
+            Box(modifier = GlanceModifier.background(busColor(metroName[1]-'0')).cornerRadius(12.dp).padding(horizontal = 6.dp, vertical = 3.dp)
+                .clickable(actionRunCallback<PopUpButton>(
+                    parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to "метро")
+                ))){
+                Text(text = metroName,
+                    style = TextStyle(fontSize = textSizeDefault.spScaled(scale*0.75f), color = reverseDefaultColor, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                )
+            }
+            Text("⟋\n⟍")
         }
     }
     private fun busColor(bus:Bus):Color{
@@ -421,5 +436,23 @@ class BaseGlance : GlanceAppWidget() {
             )
         }
         Spacer(modifier = GlanceModifier.height(6.dp))
+    }
+    @Composable
+    private fun DisplayMetroStations(metro: MetroEntry, size:Int){
+        val func: @Composable (list:ArrayList<MetroArriveTime>) -> Unit = {
+            it ->
+            Row(GlanceModifier.padding(start = 4.dp)){
+                it.forEachIndexed { index,it ->
+                    Text(it.minutes.toString(), style = TextStyle(fontSize = size.sp))
+                    if(index!=metro.direction.lastIndex){
+                        Text(", ", style = TextStyle(fontSize = size.sp))
+                    }
+                }
+            }
+        }
+        Column{
+            func(metro.direction)
+            func(metro.oppDirection)
+        }
     }
 }
