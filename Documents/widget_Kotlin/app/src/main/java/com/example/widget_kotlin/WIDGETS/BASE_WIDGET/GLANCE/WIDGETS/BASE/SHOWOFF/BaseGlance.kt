@@ -10,26 +10,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceTheme
-import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.text.Text
-import com.example.widget_kotlin.R
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.BusEntry
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import androidx.glance.GlanceModifier
-import androidx.glance.Image
 import androidx.glance.LocalSize
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
@@ -41,12 +36,10 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Spacer
-import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
@@ -63,14 +56,10 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.PopUpButton
 import com.google.gson.Gson
 import java.util.stream.Collectors
-import kotlin.math.abs
-import kotlin.math.floor
 
 class BaseGlance : GlanceAppWidget() {
     override val sizeMode: SizeMode
         get() = SizeMode.Exact
-
-    var smallerButtons:Boolean = false
     val defaultColor = ColorProvider(Color.Black, Color.White)
 
     val reverseDefaultColor = ColorProvider(Color.White, Color.Black)
@@ -93,7 +82,7 @@ class BaseGlance : GlanceAppWidget() {
             val size = LocalSize.current
             val ratio = DpSize((size.width / standard.width).dp, (size.height / standard.height).dp)
             Log.d("nigger", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
-            var scale = if(isMetroStation){setScale(metroList, ratio, size)}else{setScale(busList, ratio, size)}
+            var scale = if(isMetroStation){1.15f}else{setScale(busList, ratio, size)}
             if(busList.isEmpty()){scale = 1f}
 
             val busDisplay: @Composable () -> Unit = {
@@ -136,7 +125,8 @@ class BaseGlance : GlanceAppWidget() {
                                                         modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
                                                             parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to arrivals[index].lastStation,
                                                                 ActionParameters.Key<String>("busStop") to arrivals[index].realLastStation,
-                                                                ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString())
+                                                                ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString(),
+                                                                ActionParameters.Key<String>("isMetro") to "false")
                                                         )
                                                         )
                                                     )
@@ -179,7 +169,7 @@ class BaseGlance : GlanceAppWidget() {
                     else{
                         Column{
                             metroList.forEachIndexed { index, entry ->
-                                val space = (index)*50
+                                val space = 10+(index)*5
                                 Row(GlanceModifier.padding(top = space.dp)){
                                     Column(GlanceModifier.padding(top = 15.dp)){
                                         BusBox(entry.metro, scale)
@@ -193,7 +183,6 @@ class BaseGlance : GlanceAppWidget() {
             }
             val contentDisplay = if(isMetroStation){metroDisplay}else{busDisplay}
 
-
             GlanceTheme {
                 Scaffold(
                     titleBar = {
@@ -202,26 +191,6 @@ class BaseGlance : GlanceAppWidget() {
                     }
                 ) {
                     contentDisplay()
-                    Column(
-                        modifier = GlanceModifier.fillMaxSize(),
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        val buttonsPadding = 4
-                        val buttonScale = if(!smallerButtons){scale * 0.9f}else{scale*0.6f}
-                        var buttonSize = 18.spScaled(buttonScale)
-                        if(floor(size.width.value) == floor(standard.width.value) || floor(size.height.value) == floor(standard.height.value)) buttonSize = 18.sp
-                        //buttonSize = buttonSize.value.coerceAtMost(18f).sp
-                        Row(modifier = GlanceModifier.padding(bottom = buttonsPadding.dpScaled(scale))) {
-                            Row(modifier = GlanceModifier.padding(start = 80.dp)) {
-                                Button(
-                                    text = "",
-                                    onClick = actionRunCallback<BaseButton>(),
-                                    style = TextStyle(fontSize = buttonSize)
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -256,13 +225,16 @@ class BaseGlance : GlanceAppWidget() {
             when((it.bus.name[1]-'0')){
                 1 -> assign(listArr, "Витоша", "Сливница", "Сливница")
                 2 -> assign(listArr, "Бизнес парк", "Обеля", "Обеля")
-                4 -> assign(listArr, "Витоша", "Обеля", "Сливница")
+                4 -> assign(listArr, "Витоша", "Сливница", "Обеля")
             }
+            Log.d("nigger", listArr.toString())
             val pair = getMetroStationEndStops(metroStations, it.bus.name)
             val listA = it.arrivals.stream().filter{arr -> arr.realLastStation == pair.first}.map{arr-> MetroArriveTime(arr.minutes,arr.lastStation, arr.realLastStation) }.limit(3).collect(Collectors.toCollection {ArrayList()})
             val listB = it.arrivals.stream().filter{arr -> arr.realLastStation == pair.second}.map{arr-> MetroArriveTime(arr.minutes,arr.lastStation, arr.realLastStation) }.limit(3).collect(Collectors.toCollection {ArrayList()})
             val metroEntry = MetroEntry(it.bus.name, listA, listB)
             metroList.add(metroEntry)
+            Log.d("nigger", pair.toString())
+            Log.d("nigger", metroEntry.toString())
         }
         metroList.sortBy { it-> it.metro[1]-'0' }
         return metroList
@@ -278,15 +250,13 @@ class BaseGlance : GlanceAppWidget() {
 
     private fun setScale(busList: ArrayList<BusEntry>, Scaling: DpSize, Standard:DpSize): Float {
         val maxChars = 8.5f
-        val maxRows = 3.5f
+        val maxRows = 3.125f
 
         val value = maxChars * Scaling.width.value
-        //val maxLength = floor(value)
         var maxStringLength = 1
         busList.forEach { it ->
             val arrivals = it.arrivals.map{it.minutes}
             val curr = it.bus.name.length + arrivals.toString().length - 2 - (2*(arrivals.size-1)) //for "[]", " " and ","
-            //Log.d("test", "$arrivals $curr")
             if (curr > maxStringLength) maxStringLength = curr
         }
 
@@ -301,37 +271,6 @@ class BaseGlance : GlanceAppWidget() {
         var finalScale = minOf(xScale, yScale)
         val xMax = Scaling.width.value*1.125f
         finalScale = finalScale.coerceAtMost(xMax)
-        smallerButtons = abs(xScale-yScale)<0.1f
-        return finalScale
-    }
-    private fun setScale(metroEntries: List<MetroEntry>, Scaling: DpSize, Standard:DpSize): Float {
-        val maxChars = 8f
-        val maxRows = 4f
-
-        val xValue = maxChars * Scaling.width.value
-        //val maxLength = floor(value)
-        var maxStringLength = 1
-        metroEntries.forEach { it ->
-            val currWidthA = it.direction.sumOf { dir -> dir.minutes.toString().length } + it.metro.length
-            val currWidthB = it.oppDirection.sumOf { dir -> dir.minutes.toString().length } + it.metro.length
-            val maxLength = maxOf(currWidthA, currWidthB)
-            if(maxLength>maxStringLength) maxStringLength = maxLength
-        }
-
-        val maxItems = (maxRows * ((Standard.height.value/100)-1).toInt())
-
-        val curr = 1f / maxItems
-        val now = 1f / (metroEntries.size*2f)
-
-        //Log.d("nigger", "${metroEntries.size} $maxItems $curr $now")
-        val xScale = xValue / maxStringLength
-        val yScale = 1 / (curr / now)
-
-        //Log.d("nigger", "$xScale $yScale")
-        var finalScale = minOf(xScale, yScale)
-        val xMax = Scaling.width.value*1.15f
-        finalScale = finalScale.coerceAtMost(xMax)
-        smallerButtons = abs(xScale-yScale)<0.1f
         return finalScale
     }
     private fun getTypeName(context:Context,bus:Bus):String{
@@ -419,10 +358,10 @@ class BaseGlance : GlanceAppWidget() {
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.Vertical.CenterVertically // 👈 centers icon + text vertically
         ) {
-            Image(
-                provider = ImageProvider(R.drawable.app_widget_background),
-                contentDescription = null,
-                modifier = GlanceModifier.size(24.dp) // 👈 controls icon size
+            Text(
+                text = "\uD83D\uDD04",
+                style = TextStyle(fontSize = 20.sp, color = defaultColor, fontWeight = FontWeight.Bold),
+                modifier = GlanceModifier.clickable(actionRunCallback<BaseButton>())
             )
             Spacer(modifier = GlanceModifier.width(8.dp))
             val scale = if(text.length>14){14f/text.length}else{1f}
@@ -443,7 +382,12 @@ class BaseGlance : GlanceAppWidget() {
             it ->
             Row(GlanceModifier.padding(start = 4.dp)){
                 it.forEachIndexed { index,it ->
-                    Text(it.minutes.toString(), style = TextStyle(fontSize = size.sp))
+                    Text(it.minutes.toString(), style = TextStyle(fontSize = size.sp),
+                        modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
+                            parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to it.direction,
+                                ActionParameters.Key<String>("busStop") to it.normalDirection,
+                                ActionParameters.Key<String>("isMetro") to "true")
+                        )))
                     if(index!=metro.direction.lastIndex){
                         Text(", ", style = TextStyle(fontSize = size.sp))
                     }
