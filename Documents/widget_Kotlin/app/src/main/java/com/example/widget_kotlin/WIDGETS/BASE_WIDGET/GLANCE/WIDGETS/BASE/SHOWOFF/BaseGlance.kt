@@ -188,10 +188,10 @@ class BaseGlance : GlanceAppWidget() {
                     titleBar = {
                         val text = currentPair?.original?.Name ?: "Not selected"
                         CustomTitleBar(text)
-                    }
-                ) {
-                    contentDisplay()
-                }
+                    },
+                    backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
+                    content = contentDisplay
+                )
             }
         }
     }
@@ -227,14 +227,11 @@ class BaseGlance : GlanceAppWidget() {
                 2 -> assign(listArr, "Бизнес парк", "Обеля", "Обеля")
                 4 -> assign(listArr, "Витоша", "Сливница", "Обеля")
             }
-            Log.d("nigger", listArr.toString())
             val pair = getMetroStationEndStops(metroStations, it.bus.name)
             val listA = it.arrivals.stream().filter{arr -> arr.realLastStation == pair.first}.map{arr-> MetroArriveTime(arr.minutes,arr.lastStation, arr.realLastStation) }.limit(3).collect(Collectors.toCollection {ArrayList()})
             val listB = it.arrivals.stream().filter{arr -> arr.realLastStation == pair.second}.map{arr-> MetroArriveTime(arr.minutes,arr.lastStation, arr.realLastStation) }.limit(3).collect(Collectors.toCollection {ArrayList()})
             val metroEntry = MetroEntry(it.bus.name, listA, listB)
             metroList.add(metroEntry)
-            Log.d("nigger", pair.toString())
-            Log.d("nigger", metroEntry.toString())
         }
         metroList.sortBy { it-> it.metro[1]-'0' }
         return metroList
@@ -250,7 +247,7 @@ class BaseGlance : GlanceAppWidget() {
 
     private fun setScale(busList: ArrayList<BusEntry>, Scaling: DpSize, Standard:DpSize): Float {
         val maxChars = 8.5f
-        val maxRows = 3.125f
+        val maxRows = if(busList.size>7){3f}else{4f}
 
         val value = maxChars * Scaling.width.value
         var maxStringLength = 1
@@ -399,4 +396,5 @@ class BaseGlance : GlanceAppWidget() {
             func(metro.oppDirection)
         }
     }
+    private fun Color.toColorProvider() = ColorProvider(this, this)
 }

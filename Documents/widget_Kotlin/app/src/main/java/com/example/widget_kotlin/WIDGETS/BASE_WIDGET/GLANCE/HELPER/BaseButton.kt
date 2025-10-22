@@ -136,7 +136,7 @@ class BaseButton : ActionCallback {
             if(stationA.contains(stationB)) return true
             if(stationB.contains(stationA)) return true
         }
-        Log.d("check", "$stationA $check")
+        Log.d("stationCheck", "$stationA $check")
         return false
     }
 
