@@ -1,5 +1,6 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER
 
+import BACKEND.Rest.ScrapperController
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.res.AssetManager
@@ -8,6 +9,7 @@ import androidx.core.content.edit
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
+import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.BusEntry
@@ -20,6 +22,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
@@ -37,15 +40,19 @@ class BaseButton : ActionCallback {
         val currentPair = getCurrentStationPair(context)
         if(currentPair!=null){
             try {
+                Log.d("fuck", "send ${currentPair.original}")
                 val map = getMap(context,currentPair.original.ID)
                 saveListMemory(context, map, glanceId)
-                delay(200)
                 updater.updateWidget(context)
             } catch (e: Exception) {
                 Log.d("widget error", e.toString())
             }
         }
+        else{
+            Log.d("fuck", "fck you mean by null")
+        }
     }
+
 
     private fun ReceiveData(stopID: String, call: Callback) {
         CurrentStationID = stopID
@@ -57,8 +64,7 @@ class BaseButton : ActionCallback {
         val request = Request.Builder().url(url).post(requestBody).build()
         client.newCall(request).enqueue(call)
     }
-
-    private suspend fun getMap(context: Context,stopID: String): LinkedHashMap<Bus, ArrayList<ArriveTime>> =
+    private suspend fun getMap(context: Context, stopID: String, pass:Boolean): LinkedHashMap<Bus, ArrayList<ArriveTime>> =
         suspendCancellableCoroutine { cont ->
             ReceiveData(stopID, object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
@@ -76,11 +82,16 @@ class BaseButton : ActionCallback {
                         val busMap: LinkedHashMap<Bus, ArrayList<ArriveTime>> = LinkedHashMap()
 
                         val assetManager = context.assets
-                        val typesJson = assetManager.open("types.json").bufferedReader().use{it.readText()}
+                        val typesJson = assetManager.open("types.json").bufferedReader().use { it.readText() }
 
                         for (bus in buses) {
                             val map = getIsLastStationMap(assetManager, typesJson, bus)
-                            val realLastStation = getFromPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, "undefined")
+                            val realLastStation = getFromPreferences(
+                                context,
+                                "busStationSave$CurrentStationID${bus.name}",
+                                null,
+                                "undefined"
+                            )
                             if (!busMap.containsKey(bus)) {
                                 val arriveTimes: ArrayList<ArriveTime> = ArrayList()
                                 val isLast = isLastStation(bus, map)
@@ -88,10 +99,17 @@ class BaseButton : ActionCallback {
                                     val arr = ArriveTime(time, isLast, bus.lastStop)
                                     arriveTimes.add(arr)
                                 }
-                                //saving to memory
-                                if(!realLastStation.isNullOrEmpty() && realLastStation != "undefined"){arriveTimes.forEach { it->it.realLastStation = realLastStation }}
-                                else if(isLast) {arriveTimes.forEach { it-> it.realLastStation = bus.lastStop }
-                                    saveToPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, bus.lastStop)
+                                // saving to memory
+                                if (!realLastStation.isNullOrEmpty() && realLastStation != "undefined") {
+                                    arriveTimes.forEach { it -> it.realLastStation = realLastStation }
+                                } else if (isLast) {
+                                    arriveTimes.forEach { it -> it.realLastStation = bus.lastStop }
+                                    saveToPreferences(
+                                        context,
+                                        "busStationSave$CurrentStationID${bus.name}",
+                                        null,
+                                        bus.lastStop
+                                    )
                                 }
 
                                 busMap[bus] = arriveTimes
@@ -103,9 +121,16 @@ class BaseButton : ActionCallback {
                                     original?.add(arr)
                                 }
 
-                                if(!realLastStation.isNullOrEmpty() && realLastStation != "undefined"){original?.forEach { it->it.realLastStation = realLastStation }}
-                                else if(isLast) {original?.forEach { it-> it.realLastStation = bus.lastStop }
-                                    saveToPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, bus.lastStop)
+                                if (!realLastStation.isNullOrEmpty() && realLastStation != "undefined") {
+                                    original?.forEach { it -> it.realLastStation = realLastStation }
+                                } else if (isLast) {
+                                    original?.forEach { it -> it.realLastStation = bus.lastStop }
+                                    saveToPreferences(
+                                        context,
+                                        "busStationSave$CurrentStationID${bus.name}",
+                                        null,
+                                        bus.lastStop
+                                    )
                                 }
 
                                 original?.sortBy(ArriveTime::minutes)
@@ -118,6 +143,45 @@ class BaseButton : ActionCallback {
                 }
             })
         }
+
+
+    private suspend fun getMap(context: Context, stopID: String): LinkedHashMap<Bus, ArrayList<ArriveTime>> {
+        CurrentStationID = stopID
+        val scrapperController = ScrapperController()
+
+        val buses: ArrayList<Bus> = scrapperController.getData(stopID)
+        val busMap: LinkedHashMap<Bus, ArrayList<ArriveTime>> = LinkedHashMap()
+        val assetManager = context.assets
+        val typesJson = assetManager.open("types.json").bufferedReader().use { it.readText() }
+
+        for (bus in buses) {
+            val map = getIsLastStationMap(assetManager, typesJson, bus)
+            val realLastStation =
+                getFromPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, "undefined")
+
+            val arriveTimes = busMap.getOrPut(bus) { ArrayList() }
+            val isLast = isLastStation(bus, map)
+
+            bus.arriveTimes.forEach { time ->
+                arriveTimes.add(ArriveTime(time, isLast, bus.lastStop))
+            }
+
+            if (!realLastStation.isNullOrEmpty() && realLastStation != "undefined") {
+                arriveTimes.forEach { it.realLastStation = realLastStation }
+            } else if (isLast) {
+                arriveTimes.forEach { it.realLastStation = bus.lastStop }
+                saveToPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, bus.lastStop)
+            }
+
+            arriveTimes.sortBy(ArriveTime::minutes)
+        }
+
+        return busMap
+    }
+
+
+
+
 
     private fun saveListMemory(context: Context, map: Map<Bus, ArrayList<ArriveTime>>, glanceId: GlanceId) {
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)

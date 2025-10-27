@@ -28,14 +28,14 @@ class PopUpButton : ActionCallback{
         }
         else{
             if(!busStop.isNullOrEmpty() && busStop!="undefined") {
-                busStop = busStop.lowercase().replaceFirstChar { it.uppercase() }
                 list.add("Последна спирка: $busStop")
             }
-            if(!stationStop.isNullOrEmpty()) {
-                stationStop = stationStop.lowercase().replaceFirstChar { it.uppercase() }
-                list.add("Води до: $stationStop")
+            if(!isLast.isNullOrEmpty()){
+                if(!stationStop.isNullOrEmpty() && isLast == "false") {
+                    list.add("Води до: $stationStop")
+                    list.add(isLast)
+                }
             }
-            if(!isLast.isNullOrEmpty()) list.add(isLast)
         }
         }
         saveToPreferences(context, list)

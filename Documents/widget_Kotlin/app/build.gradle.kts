@@ -73,5 +73,6 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    implementation("androidx.work:work-runtime-ktx:2.10.5")
+    implementation(libs.androidx.work)
+    implementation(libs.jsoup)
 }
