@@ -67,5 +67,13 @@
             android:launchMode="singleInstancePerTask"
             android:taskAffinity="">
         </activity>
+        <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.CheckRandomStationActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Material3.DayNight.Dialog"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleInstancePerTask"
+            android:taskAffinity="">
+        </activity>
     </application>
 </manifest>

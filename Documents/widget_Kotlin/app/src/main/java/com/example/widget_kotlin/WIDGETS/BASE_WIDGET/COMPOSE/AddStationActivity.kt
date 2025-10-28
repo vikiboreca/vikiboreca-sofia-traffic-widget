@@ -21,14 +21,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import okio.IOException
 
 
 class AddStationActivity: ComponentActivity() {
@@ -81,7 +78,6 @@ class AddStationActivity: ComponentActivity() {
                         }
                         else{
                             if(!text.isEmpty() && !listHasName(text)){
-                                /*TODO(Remove the UI for keyboard)*/
                                 StationLabel = text
                                 saveToPreferences(ID, StationLabel)
                                 lifecycleScope.launch(Dispatchers.Default) {

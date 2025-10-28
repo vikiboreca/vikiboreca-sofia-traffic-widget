@@ -45,6 +45,7 @@ class SelectorGlance: BaseWidget() {
     override fun UIContent(context: Context, id: GlanceId, prefs:Preferences) {
         val list = getList(context)
         val chosenName = prefs[stringPreferencesKey("chosenStation")] ?: ""
+        val realChosenName = getCurrentStationPair(context)
             Scaffold {
                 Column {
                     var itemCount = 0
@@ -76,7 +77,7 @@ class SelectorGlance: BaseWidget() {
                                     )
                                     Row(modifier = GlanceModifier.defaultWeight(),horizontalAlignment = Alignment.End){
                                         Switch(
-                                            pair.Name == chosenName,
+                                            pair.Name == realChosenName,
                                             onCheckedChange = {
                                                 CoroutineScope(Dispatchers.Default).launch {
                                                     saveCurrentStation(context, pairAdvanced)
@@ -85,7 +86,7 @@ class SelectorGlance: BaseWidget() {
                                                         prefsState[stringPreferencesKey("chosenStation")] = if(toRemember!=pair.Name){pair.Name}else{""}
                                                     }
                                                     selectorUpdater.updateWidget(context)
-                                                    delay(500)
+                                                    delay(100)
                                                     basicUpdater.updateWidget(context)
                                                 }
                                             }
@@ -144,5 +145,13 @@ class SelectorGlance: BaseWidget() {
             putString("activeStation", pairText)
         }
         //Log.d("nigger", pairText)
+    }
+    private fun getCurrentStationPair(context: Context):String{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val pairTextOriginal = prefs.getString("activeStation", "null")
+        if(pairTextOriginal == "null") return ""
+        val advanced: StationPairAdvanced? = gson.fromJson(pairTextOriginal, object : TypeToken<StationPairAdvanced>() {}.type)
+        return advanced?.original?.Name ?: ""
     }
 }

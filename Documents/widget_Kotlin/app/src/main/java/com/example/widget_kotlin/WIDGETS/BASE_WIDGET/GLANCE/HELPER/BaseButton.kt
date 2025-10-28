@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
@@ -37,6 +38,9 @@ class BaseButton : ActionCallback {
     var CurrentStationID:String = ""
     val updater = WidgetUpdater(BaseGlance::class.java)
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        getResults(context, glanceId, parameters)
+    }
+    private suspend fun getResults(context: Context, glanceId: GlanceId, parameters: ActionParameters){
         val currentPair = getCurrentStationPair(context)
         if(currentPair!=null){
             try {
@@ -44,6 +48,28 @@ class BaseButton : ActionCallback {
                 val map = getMap(context,currentPair.original.ID)
                 saveListMemory(context, map, glanceId)
                 updater.updateWidget(context)
+            } catch (e: Exception) {
+                Log.d("widget error", e.toString())
+            }
+        }
+        else{
+            Log.d("fuck", "fck you mean by null")
+        }
+    }
+
+    suspend fun getResults(context: Context, glanceIdString: String){
+        val glanceIds = GlanceAppWidgetManager(context).getGlanceIds(BaseGlance::class.java)
+        val currentPair = getCurrentStationPair(context)
+        if(currentPair!=null){
+            try {
+                Log.d("fuck", "send ${currentPair.original}")
+                val map = getMap(context,currentPair.original.ID)
+                for (id in glanceIds) {
+                    if (id.toString() == glanceIdString) {
+                        saveListMemory(context, map, id)
+                    }
+                }
+                //updater.updateWidget(context)
             } catch (e: Exception) {
                 Log.d("widget error", e.toString())
             }

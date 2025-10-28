@@ -27,6 +27,7 @@ import com.google.gson.reflect.TypeToken
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalSize
 import androidx.glance.action.actionParametersOf
+import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.cornerRadius
@@ -46,6 +47,7 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.CheckRandomStationActivity
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.MetroArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.MetroEntry
@@ -187,7 +189,7 @@ class BaseGlance : GlanceAppWidget() {
                 Scaffold(
                     titleBar = {
                         val text = currentPair?.original?.Name ?: "Not selected"
-                        CustomTitleBar(text)
+                        CustomTitleBar(text, id)
                     },
                     backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
                     content = contentDisplay
@@ -347,7 +349,7 @@ class BaseGlance : GlanceAppWidget() {
     }
 
     @Composable
-    private fun CustomTitleBar(text:String){
+    private fun CustomTitleBar(text:String, glanceId: GlanceId){
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
@@ -368,7 +370,10 @@ class BaseGlance : GlanceAppWidget() {
                     fontSize = 20.spScaled(scale),
                     color = defaultColor,
                     fontWeight = FontWeight.Bold
-                )
+                ),
+                modifier = GlanceModifier.clickable(actionStartActivity<CheckRandomStationActivity>(
+                    actionParametersOf(ActionParameters.Key<String>("glanceId") to glanceId.toString())
+                ))
             )
         }
         Spacer(modifier = GlanceModifier.height(6.dp))
