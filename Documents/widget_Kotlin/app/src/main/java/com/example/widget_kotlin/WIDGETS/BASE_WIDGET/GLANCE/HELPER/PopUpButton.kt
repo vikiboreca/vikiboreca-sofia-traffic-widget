@@ -15,8 +15,8 @@ class PopUpButton : ActionCallback{
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val list:ArrayList<String> = ArrayList()
         val busType = parameters[ActionParameters.Key<String>("vehicleType")]
-        var busStop = parameters[ActionParameters.Key<String>("busStop")]
-        var stationStop = parameters[ActionParameters.Key<String>("stationStop")]
+        val busStop = parameters[ActionParameters.Key<String>("busStop")]
+        val stationStop = parameters[ActionParameters.Key<String>("stationStop")]
         val isLast = parameters[ActionParameters.Key<String>("isLast")]
         val isMetro = parameters[ActionParameters.Key<String>("isMetro")]
 

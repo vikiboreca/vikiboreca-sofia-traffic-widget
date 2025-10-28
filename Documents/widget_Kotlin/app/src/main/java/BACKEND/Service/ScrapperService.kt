@@ -17,6 +17,13 @@ class ScrapperService {
     /**
      * Main entry point — gets raw JSON data for a given stop ID.
      */
+
+    suspend fun isIDValid(id:String):Boolean{
+        val cookies = getCookies()
+        val xToken = getToken(cookies)
+        val jsonBody = getBody(id)
+        return getJsonValid(xToken, jsonBody, cookies)
+    }
     suspend fun getRawData(id: String): String {
         val cookies = getCookies()
         val xToken = getToken(cookies)
@@ -95,9 +102,36 @@ class ScrapperService {
 
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful) {
-                        cont.resume(response.body?.string() ?: "")
+                        cont.resume(response.body.string())
                     } else {
                         cont.resumeWithException(IOException("Response code ${response.code}"))
+                    }
+                }
+            })
+        }
+    private suspend fun getJsonValid(xToken: String, jsonBody: String, cookies: Map<String, String>): Boolean =
+        suspendCancellableCoroutine { cont ->
+            val cookieHeader = cookies.entries.joinToString("; ") { "${it.key}=${it.value}" }
+
+            val requestBody = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
+            val request = Request.Builder()
+                .url(postUrl)
+                .post(requestBody)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("X-XSRF-TOKEN", xToken)
+                .addHeader("Cookie", cookieHeader)
+                .build()
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    cont.resume(false)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    if (response.isSuccessful) {
+                        cont.resume(true)
+                    } else {
+                        cont.resume(false)
                     }
                 }
             })

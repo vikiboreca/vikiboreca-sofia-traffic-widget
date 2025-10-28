@@ -1,5 +1,6 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
+import BACKEND.Rest.ScrapperController
 import androidx.core.content.edit
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -68,8 +69,8 @@ class AddStationActivity: ComponentActivity() {
                         if(ID.isEmpty()){
                             IsIDValid(
                                 text,
-                                onValid = {
-                                    ID = text; text = ""; error = false
+                                onValid = { saveID ->
+                                    ID = saveID; text = ""; error = false
                                     label = "Type Station Name"
                                 },
                                 onError = {
@@ -80,6 +81,7 @@ class AddStationActivity: ComponentActivity() {
                         }
                         else{
                             if(!text.isEmpty() && !listHasName(text)){
+                                /*TODO(Remove the UI for keyboard)*/
                                 StationLabel = text
                                 saveToPreferences(ID, StationLabel)
                                 lifecycleScope.launch(Dispatchers.Default) {
@@ -99,29 +101,23 @@ class AddStationActivity: ComponentActivity() {
                 }
             }
     }
-    private fun IsIDValid(id:String, onValid:()->Unit, onError:()->Unit){
+    private fun IsIDValid(id:String, onValid:(saveID:String)->Unit, onError:()->Unit){
         if(id.isEmpty() || id.length>4) {runOnUiThread { onError();}; return}
         id.forEach { it ->
             if(!it.isDigit()) {runOnUiThread { onError();}; return}
         }
         if(listHasID(id)) {runOnUiThread { onError();}; return}
-
-        ReceiveData(id, object: Callback{
-            override fun onFailure(call: Call, e: IOException) {
+        val realID = id
+        val scrapperController = ScrapperController()
+        lifecycleScope.launch {
+            if(scrapperController.isIDValid(id)){
+                runOnUiThread { onValid(realID) }
+            }
+            else{
                 runOnUiThread { onError() }
             }
+        }
 
-            override fun onResponse(call: Call, response: Response) {
-                val body = response.body.string()
-                runOnUiThread {
-                    if (response.code == 200 && body.isNotEmpty()) {
-                        onValid()
-                    } else {
-                        onError()
-                    }
-                }
-            }
-        })
     }
 
 

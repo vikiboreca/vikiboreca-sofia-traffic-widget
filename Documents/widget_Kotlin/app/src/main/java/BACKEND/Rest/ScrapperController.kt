@@ -49,5 +49,10 @@ class ScrapperController {
         return result
     }
 
+    suspend fun isIDValid(id:String):Boolean{
+        val scrapperService = ScrapperService()
+        return scrapperService.isIDValid(id)
+    }
+
 
 }
