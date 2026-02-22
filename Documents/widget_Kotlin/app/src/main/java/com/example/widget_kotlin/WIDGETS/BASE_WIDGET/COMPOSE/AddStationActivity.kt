@@ -47,6 +47,8 @@ class AddStationActivity: ComponentActivity() {
         var label by remember{mutableStateOf("Type Station ID")}
         var error by remember {mutableStateOf(false)}
 
+        
+
             MaterialTheme {
                 Column(
                     modifier = Modifier.wrapContentSize(),
