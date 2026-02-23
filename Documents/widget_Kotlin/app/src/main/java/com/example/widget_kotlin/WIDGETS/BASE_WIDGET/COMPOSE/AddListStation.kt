@@ -27,10 +27,8 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.core.content.edit
-import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+
 
 class AddListStation: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
