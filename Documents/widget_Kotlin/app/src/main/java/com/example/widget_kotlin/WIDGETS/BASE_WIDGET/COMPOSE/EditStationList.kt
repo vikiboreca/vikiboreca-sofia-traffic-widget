@@ -1,12 +1,13 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +39,7 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-
+import androidx.core.content.edit
 class EditStationList : ComponentActivity() {
 
 
@@ -54,12 +55,35 @@ class EditStationList : ComponentActivity() {
 
     @Composable
     private fun InputContent() {
-        val list = getStationLists()
-        list.add(ListPair("Create a new list", ArrayList<StationPairAdvanced>()))
+        var updater by remember { mutableLongStateOf(1L) }
+
+        val list = remember(updater) {
+            getStationLists().apply {
+                add(ListPair("Create a new list", ArrayList()))
+            }
+        }
+
         this.list = list
+
+        val launcher = startResultActivity({
+            if (index != -1) {
+                this.list.removeAt(index)
+                val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+                val gson = Gson()
+                prefs.edit {
+                    putString("StationLists", gson.toJson(this@EditStationList.list))
+                    if (this@EditStationList.list.isNotEmpty())
+                        putString("activeStationList", this@EditStationList.list[0].name)
+                }
+
+                index = -1
+            }
+            updater++
+        })
+
         MaterialTheme {
             Column {
-                SimpleDropdown(list) // no fillMaxWidth
+                SimpleDropdown(list)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(0.975f)
@@ -70,7 +94,8 @@ class EditStationList : ComponentActivity() {
                     BorderedTextButton("➕") {}
                     BorderedTextButton("➖") {}
                     BorderedTextButton("\uD83D\uDDD1\uFE0F") {
-
+                        val intent = Intent(this@EditStationList, DeleteList::class.java)
+                        launcher.launch(intent)
                     }
                 }
             }
@@ -104,25 +129,20 @@ class EditStationList : ComponentActivity() {
                 if (list.size <= 1) "no available lists" else list[0].name
             )
         }
+        if(list.size>1) index = 0
+
         var expanded by remember { mutableStateOf(false) }
         var updater by remember { mutableLongStateOf(1L) }
 
-        val launcher = rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val success =
-                    result.data?.getBooleanExtra("success", false) ?: false
-                if (success) {
-                    selectedOption = getActiveStationName()
-                    list.add(ListPair(selectedOption, ArrayList<StationPairAdvanced>()))
-                    val temp = list[list.size-1]
-                    list[list.size-1] = list[list.size-2]
-                    list[list.size-2] = temp
-                    updater++
-                }
-            }
-        }
+        val launcher = startResultActivity({selectedOption = getActiveStationName()
+            list.add(ListPair(selectedOption, ArrayList()))
+            val temp = list[list.size-1]
+            list[list.size-1] = list[list.size-2]
+            list[list.size-2] = temp
+            this.list = list
+            this.list.removeAt(list.size-1)
+            index = this.list.size-1
+            updater++})
 
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -168,7 +188,7 @@ class EditStationList : ComponentActivity() {
     }
 
     @Composable
-    fun BorderedTextButton(text:String, action:()->Unit) {
+    private fun BorderedTextButton(text:String, action:()->Unit) {
         Text(
             text = text,
             color = Color.White,
@@ -181,5 +201,27 @@ class EditStationList : ComponentActivity() {
                 .padding(horizontal = 8.dp, vertical = 4.dp)
                 .clickable(onClick = action)
         )
+    }
+
+    @Composable
+    private fun startResultActivity(pass:()->Unit, fail:()->Unit = {}): ManagedActivityResultLauncher<Intent, ActivityResult> {
+        val launcher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val success =
+                    result.data?.getBooleanExtra("success", false) ?: false
+                if (success) {
+                    pass()
+                }
+                else{
+                    fail()
+                }
+            }
+            else if(result.resultCode == RESULT_CANCELED){
+                fail()
+            }
+        }
+        return launcher
     }
 }
