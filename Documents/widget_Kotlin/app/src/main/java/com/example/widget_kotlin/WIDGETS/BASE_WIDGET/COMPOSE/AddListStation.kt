@@ -68,11 +68,10 @@ class AddListStation: ComponentActivity() {
                         finish()
                     }
                     else{
-                        if(text.isEmpty()){
-                            label = "text must have at least one symbol"
-                        }
-                        else{
-                            label = "you already have that list"
+                        label = if(text.isEmpty()){
+                            "text must have at least one symbol"
+                        } else{
+                            "you already have that list"
                         }
                         error = true
                     }
@@ -91,7 +90,7 @@ class AddListStation: ComponentActivity() {
         var list:ArrayList<ListPair>? = ArrayList()
         val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
         val gson = Gson()
-        val listString = prefs.getString("StationLists", null)
+        val listString = prefs.getString("pureStationLists", null)
 
         if(!listString.isNullOrEmpty()){
             list = gson.fromJson(listString, object : TypeToken<ArrayList<ListPair>>() {}.type)
@@ -103,11 +102,13 @@ class AddListStation: ComponentActivity() {
         }
 
         list.add(ListPair(name, ArrayList()))
-
+        prefs.edit{
+            putString("pureStationLists", gson.toJson(list))
+        }
+        list.add(ListPair("Create a new list", ArrayList()))
         prefs.edit{
             putString("StationLists", gson.toJson(list))
         }
-
         return true
     }
 

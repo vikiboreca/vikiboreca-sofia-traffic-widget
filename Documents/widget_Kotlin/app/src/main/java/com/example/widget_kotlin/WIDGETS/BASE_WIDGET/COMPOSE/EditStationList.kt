@@ -26,8 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,136 +36,112 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import androidx.core.content.edit
-class EditStationList : ComponentActivity() {
 
+class EditStationList: ComponentActivity() {
 
-    private var index: Int = -1
-    private var list: ArrayList<ListPair> = arrayListOf()
-
-    private var globalNameChange: String = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //removeList()
+        setContent{
+            Input()
+        }
+    }
+    @Composable
+    private fun Input() {
+        var list by remember { mutableStateOf(getPureStationLists().apply { add(ListPair("Create a new list", ArrayList())) }) }
+        var justDeleted by remember { mutableStateOf(false) }
+        var activeIndex by remember { mutableIntStateOf(if (list.isNotEmpty()) 0 else -1) }
+        var changeName by remember { mutableStateOf("") }
+        val launcher = startResultActivity(
+            pass = {
+                if (activeIndex != -1 && activeIndex < list.size) {
+                    list.removeAt(activeIndex)
+                    justDeleted = true
+                    activeIndex = if (list.isNotEmpty()) 0 else -1
+                    changeName = "select a station"
+                    savePureList(list)
+                    list = ArrayList(list)
+                }
+            },
+            fail = {},
+            onExtra = null
+        )
 
-        setContent {
-            InputContent()
+        MaterialTheme {
+            UI(
+                list = list,
+                justDeleted = justDeleted,
+                activeIndex = activeIndex,
+                onSelectIndex = { index ->
+                    activeIndex = index
+                    justDeleted = false
+                    changeName = ""
+                },
+                launcher = launcher,
+                {l->list = l ?: ArrayList(list) },
+                changeName = changeName
+            )
         }
     }
 
     @Composable
-    private fun InputContent() {
-        var updater by remember { mutableLongStateOf(1L) }
-        var justDeleted by remember {mutableStateOf(false)}
-        val list = remember(updater) {
-            getStationLists().apply {
-                add(ListPair("Create a new list", ArrayList()))
-            }
-        }
-        var i = 0
-        if(justDeleted){
-            i = -1
-        }
-        else{
-            i = if(list.size>1) 0 else -1
-        }
-        index = remember(updater){i}
-        this.list = list
+    private fun UI(
+        list: ArrayList<ListPair>,
+        justDeleted: Boolean,
+        activeIndex: Int,
+        onSelectIndex: (Int) -> Unit,
+        launcher: ManagedActivityResultLauncher<Intent, ActivityResult>,
+        updateList:(ArrayList<ListPair>?)->Unit,
+        changeName:String
+    ) {
+        Column {
+            SimpleDropdown(list, onClick = onSelectIndex, updateList, changeName)
 
-        val launcher = startResultActivity({
-            if (index != -1) {
-                this.list.removeAt(index)
-                this.list.removeAt(this.list.size-1)
-                val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
-                val gson = Gson()
-                prefs.edit {
-                    putString("StationLists", gson.toJson(this@EditStationList.list))
-                    if (this@EditStationList.list.isNotEmpty())
-                        putString("activeStationList", this@EditStationList.list[0].name)
-                }
-            }
-            globalNameChange = "No selected list"
-            updater++
-            justDeleted = true
-        })
-
-        MaterialTheme {
-            Column {
-                SimpleDropdown(list, {justDeleted = false})
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(0.975f)
-                        .height(55.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    BorderedTextButton("➕") {}
-                    BorderedTextButton("➖") {}
-                    BorderedTextButton("\uD83D\uDDD1\uFE0F") {
-                        if(!justDeleted){
-                            val intent = Intent(this@EditStationList, DeleteList::class.java)
-                            launcher.launch(intent)
-                        }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.975f)
+                    .height(55.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BorderedTextButton("➕") {}
+                BorderedTextButton("➖") {}
+                BorderedTextButton("\uD83D\uDDD1\uFE0F") {
+                    if (!justDeleted && activeIndex != -1) {
+                        val intent = Intent(this@EditStationList, DeleteList::class.java)
+                        launcher.launch(intent)
                     }
                 }
             }
         }
     }
 
-    private fun getStationLists(): ArrayList<ListPair> {
-        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
-        val gson = Gson()
-        val listString = prefs.getString("StationLists", null)
-        if (listString == null) return arrayListOf()
-
-        val list: ArrayList<ListPair>? =
-            gson.fromJson(listString, object : TypeToken<ArrayList<ListPair>>() {}.type)
-
-        return list ?: arrayListOf()
-    }
-
-    private fun getActiveStationName(): String {
-        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
-        var listString: String? = prefs.getString("activeStationList", null)
-        if (listString.isNullOrEmpty()) listString = "no available lists"
-        return listString
-    }
-
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun SimpleDropdown(list: ArrayList<ListPair>, onClick:()->Unit) {
-        var selectedOption by remember {
+    fun SimpleDropdown(list: ArrayList<ListPair>, onClick:(Int)->Unit, updateList:(ArrayList<ListPair>?)->Unit, changeName:String) {
+        var selectedOption by remember{
             mutableStateOf(
                 if (list.size <= 1) "no available lists" else list[0].name
             )
         }
-        val nameChange = remember(globalNameChange){
-            globalNameChange
-        }
-        if(nameChange!=""){
-            selectedOption = nameChange
-            globalNameChange = ""
-        }
-        var expanded by remember { mutableStateOf(false) }
-        var updater by remember { mutableLongStateOf(1L) }
 
-        val launcher = startResultActivity({selectedOption = getActiveStationName()
-            list.add(ListPair(selectedOption, ArrayList()))
-            val temp = list[list.size-1]
-            list[list.size-1] = list[list.size-2]
-            list[list.size-2] = temp
-            this.list = list
-            this.list.removeAt(list.size-1)
-            index = this.list.size-1
-            updater++
-        })
-        {
-            selectedOption = "Select a list"
-            updater++
+        LaunchedEffect(changeName) {
+            if(changeName.isNotEmpty()){
+                selectedOption = changeName
+            }
         }
+
+        var expanded by remember { mutableStateOf(false) }
+
+        val launcher = startResultActivity({ updateList(getStationLists());}, {},
+            { intent->
+                val name = intent?.getStringExtra("name") ?: ""
+                selectedOption = name
+            })
 
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -174,7 +151,6 @@ class EditStationList : ComponentActivity() {
                 value = selectedOption,
                 onValueChange = {},
                 readOnly = true,
-                singleLine = true,
                 label = { Text("Select a list") },
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded)
@@ -198,11 +174,9 @@ class EditStationList : ComponentActivity() {
                                     AddListStation::class.java
                                 )
                                 launcher.launch(intent)
-                                index = -1
                             } else {
                                 selectedOption = list[i].name
-                                index = i
-                                onClick()
+                                onClick(i)
                             }
                         }
                     )
@@ -228,7 +202,7 @@ class EditStationList : ComponentActivity() {
     }
 
     @Composable
-    private fun startResultActivity(pass:()->Unit, fail:()->Unit = {}): ManagedActivityResultLauncher<Intent, ActivityResult> {
+    private fun startResultActivity(pass:()->Unit, fail:()->Unit = {}, onExtra: ((Intent?) -> Unit)? = null): ManagedActivityResultLauncher<Intent, ActivityResult> {
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
@@ -236,6 +210,7 @@ class EditStationList : ComponentActivity() {
                 val success =
                     result.data?.getBooleanExtra("success", false) ?: false
                 if (success) {
+                    onExtra?.invoke(result.data)
                     pass()
                 }
                 else{
@@ -248,4 +223,44 @@ class EditStationList : ComponentActivity() {
         }
         return launcher
     }
+    private fun getStationLists(): ArrayList<ListPair> {
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val listString = prefs.getString("StationLists", null)
+        if (listString == null) return arrayListOf()
+
+        val list: ArrayList<ListPair>? =
+            gson.fromJson(listString, object : TypeToken<ArrayList<ListPair>>() {}.type)
+        return list ?: arrayListOf()
+    }
+    private fun getPureStationLists(): ArrayList<ListPair> {
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val listString = prefs.getString("pureStationLists", null)
+        if (listString == null) return arrayListOf()
+
+        val list: ArrayList<ListPair>? =
+            gson.fromJson(listString, object : TypeToken<ArrayList<ListPair>>() {}.type)
+
+
+        return list ?: arrayListOf()
+    }
+
+    private fun removeList(){
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        prefs.edit{
+            remove("StationLists")
+            remove("pureStationLists")
+        }
+    }
+    private fun savePureList(list:ArrayList<ListPair>){
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        val list2 = ArrayList(list)
+        list2.removeAt(list.size-1)
+        prefs.edit{
+            putString("pureStationLists", gson.toJson(list2))
+        }
+    }
+
 }

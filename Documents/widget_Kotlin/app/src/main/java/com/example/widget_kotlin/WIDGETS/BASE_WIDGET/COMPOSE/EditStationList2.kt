@@ -2,6 +2,7 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -27,7 +28,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,6 +45,8 @@ class EditStationList2: ComponentActivity() {
     var uiUpdater:Long = 1L
     var dropdownUpdater:Long = 1L
 
+    var changeName = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent{
@@ -59,9 +61,8 @@ class EditStationList2: ComponentActivity() {
 
         val launcher = startResultActivity(
             pass = {
-                // Delete selected item
                 if (activeIndex != -1 && activeIndex < list.size) {
-                    list = ArrayList(list) // copy to trigger recomposition
+                    list = ArrayList(list)
                     list.removeAt(activeIndex)
                     val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
                     val gson = Gson()
@@ -72,6 +73,8 @@ class EditStationList2: ComponentActivity() {
 
                     justDeleted = true
                     activeIndex = if (list.isNotEmpty()) 0 else -1
+                    changeName = "select a station"
+                    updateLayout()
                 }
             },
             fail = {},
@@ -86,8 +89,10 @@ class EditStationList2: ComponentActivity() {
                 onSelectIndex = { index ->
                     activeIndex = index
                     justDeleted = false
+                    changeName = ""
                 },
-                launcher = launcher
+                launcher = launcher,
+                {list = ArrayList(list)}
             )
         }
     }
@@ -98,10 +103,11 @@ class EditStationList2: ComponentActivity() {
         justDeleted: Boolean,
         activeIndex: Int,
         onSelectIndex: (Int) -> Unit,
-        launcher: ManagedActivityResultLauncher<Intent, ActivityResult>
+        launcher: ManagedActivityResultLauncher<Intent, ActivityResult>,
+        updateList:()->Unit
     ) {
         Column {
-            SimpleDropdown(list, onClick = onSelectIndex)
+            SimpleDropdown(list, onClick = onSelectIndex, updateList)
 
             Row(
                 modifier = Modifier
@@ -124,18 +130,28 @@ class EditStationList2: ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun SimpleDropdown(list: ArrayList<ListPair>, onClick:(Int)->Unit) {
+    fun SimpleDropdown(list: ArrayList<ListPair>, onClick:(Int)->Unit, updateList:()->Unit) {
         var selectedOption by remember {
             mutableStateOf(
                 if (list.size <= 1) "no available lists" else list[0].name
             )
         }
+
+        selectedOption = remember(changeName){
+            if(changeName!=""){
+                changeName
+            }
+            else{
+                selectedOption
+            }
+        }
+
         var expanded by remember { mutableStateOf(false) }
         val updater = remember (dropdownUpdater){
             dropdownUpdater
         }
 
-        val launcher = startResultActivity({ updateLayout() }, {},
+        val launcher = startResultActivity({ updateList();updateLayout();}, {},
             {
                 val name = intent?.getStringExtra("name") ?: ""
                 selectedOption = name
@@ -149,7 +165,6 @@ class EditStationList2: ComponentActivity() {
                 value = selectedOption,
                 onValueChange = {},
                 readOnly = true,
-                singleLine = true,
                 label = { Text("Select a list") },
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded)
@@ -210,6 +225,7 @@ class EditStationList2: ComponentActivity() {
                 val success =
                     result.data?.getBooleanExtra("success", false) ?: false
                 if (success) {
+
                     onExtra?.invoke(result.data)
                     pass()
                 }
