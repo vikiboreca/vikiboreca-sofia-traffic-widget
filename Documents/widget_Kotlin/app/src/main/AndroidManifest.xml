@@ -94,7 +94,9 @@
         </activity>
         <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.DeleteList"
             android:exported="true"
-            android:theme="@style/Theme.Material3.DayNight.Dialog">
+            android:theme="@style/Theme.Material3.DayNight.Dialog"
+            >
+
         </activity>
     </application>
 </manifest>

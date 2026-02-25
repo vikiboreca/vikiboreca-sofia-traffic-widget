@@ -63,7 +63,7 @@ class AddListStation: ComponentActivity() {
                 Button(onClick = {
                     if(text.isNotEmpty() && canSaveLists(text)){
                         error = false
-                        val intent = Intent().apply { putExtra("success", true) }
+                        val intent = Intent().apply { putExtra("success", true); putExtra("name", text) }
                         setResult(Activity.RESULT_OK, intent)
                         finish()
                     }
@@ -102,11 +102,10 @@ class AddListStation: ComponentActivity() {
             if(it.name == name) return false
         }
 
-        list.add(ListPair(name, ArrayList<StationPairAdvanced>()))
+        list.add(ListPair(name, ArrayList()))
 
         prefs.edit{
             putString("StationLists", gson.toJson(list))
-            putString("activeStationList", name)
         }
 
         return true
