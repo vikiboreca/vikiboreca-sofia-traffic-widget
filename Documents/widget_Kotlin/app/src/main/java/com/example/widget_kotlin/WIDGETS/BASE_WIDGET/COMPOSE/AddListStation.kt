@@ -64,7 +64,7 @@ class AddListStation: ComponentActivity() {
                     if(text.isNotEmpty() && canSaveLists(text)){
                         error = false
                         val intent = Intent().apply { putExtra("success", true); putExtra("name", text) }
-                        setResult(Activity.RESULT_OK, intent)
+                        setResult(RESULT_OK, intent)
                         finish()
                     }
                     else{

@@ -1,6 +1,8 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
 import BACKEND.Rest.ScrapperController
+import android.app.Activity
+import android.content.Intent
 import androidx.core.content.edit
 import android.os.Bundle
 import android.util.Log
@@ -31,13 +33,13 @@ class AddStationActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
         val list = getStationList()
         val index = intent.getIntExtra("indexEditStation", -1)
-        Log.d("fuck", list[index].name)
+        //Log.d("fuck", list[index].name)
         setContent{
-            InputScreen()
+            InputScreen(list, list[index])
         }
     }
     @Composable
-    private fun InputScreen(){
+    private fun InputScreen(list:ArrayList<ListPair>, pair:ListPair){
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}
@@ -78,8 +80,7 @@ class AddStationActivity: ComponentActivity() {
                         else{
                             if(!text.isEmpty() && !listHasName(text)){
                                 StationLabel = text
-                                saveToPreferences(ID, StationLabel)
-                                finish()
+                                save(ID, StationLabel, list, pair)
                             }
                             else{
                                 error = true
@@ -113,21 +114,14 @@ class AddStationActivity: ComponentActivity() {
     }
 
 
-    private fun saveToPreferences(ID:String, Name:String){
-        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+    private fun save(ID:String, Name:String, list:ArrayList<ListPair>, listPair:ListPair){
         val gson = Gson()
-
-        val listString = prefs.getString("PairList", null)
         val pair = StationPairAdvanced(StationPair(ID, Name))
-        var list:ArrayList<StationPairAdvanced> = ArrayList()
-        if(!listString.isNullOrEmpty()){
-            list = gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
-        }
-        list.add(pair)
-        val listSave = gson.toJson(list)
-        prefs.edit{
-            putString("PairList", listSave)
-        }
+        listPair.list.add(pair)
+        val intent = Intent().apply { putExtra("success", true); putExtra("list", gson.toJson(list))}
+        setResult(RESULT_OK, intent)
+
+        finish()
     }
 
     private fun listHasID(ID:String):Boolean{

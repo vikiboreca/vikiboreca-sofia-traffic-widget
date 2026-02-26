@@ -75,7 +75,16 @@ class EditStationList: ComponentActivity() {
         var justDeleted by remember { mutableStateOf(false) }
         var activeIndex by remember { mutableIntStateOf(if (list.isNotEmpty()) 0 else -1) }
         var changeName by remember { mutableStateOf("") }
-        val launcher = startResultActivity(
+
+        val launcher1 = startResultActivity({}, {}, )
+        {
+            intent->
+            val gson = Gson()
+            val name = intent?.getStringExtra("list") ?: ""
+            list = gson.fromJson(name, object : TypeToken<ArrayList<ListPair>>() {}.type)
+        }
+        val launcher2 = startResultActivity({}, {}, {})
+        val launcher3 = startResultActivity(
             pass = {
                 if (activeIndex != -1 && activeIndex < list.size) {
                     list.removeAt(activeIndex)
@@ -100,9 +109,9 @@ class EditStationList: ComponentActivity() {
                     justDeleted = false
                     changeName = ""
                 },
-                launcher = launcher,
                 {l->list = l ?: ArrayList(list) },
-                changeName = changeName
+                changeName = changeName,
+                launcher1, launcher2, launcher3
             )
         }
     }
@@ -113,9 +122,9 @@ class EditStationList: ComponentActivity() {
         justDeleted: Boolean,
         activeIndex: Int,
         onSelectIndex: (Int) -> Unit,
-        launcher: ManagedActivityResultLauncher<Intent, ActivityResult>,
         updateList:(ArrayList<ListPair>?)->Unit,
-        changeName:String
+        changeName:String,
+        vararg launchers: ManagedActivityResultLauncher<Intent, ActivityResult>,
     ) {
         Column {
             SimpleDropdown(list, onClick = onSelectIndex, updateList, changeName)
@@ -134,14 +143,17 @@ class EditStationList: ComponentActivity() {
                         val json = gson.toJson(list)
                         intent.putExtra("listEditStation", json)
                         intent.putExtra("indexEditStation", activeIndex)
-                        launcher.launch(intent)
+                        launchers[0].launch(intent)
                     }
                 }
-                BorderedTextButton("➖") {}
+                BorderedTextButton("➖") {
+                    //TODO(code code code)
+                    //launchers[1].launch(intent)
+                }
                 BorderedTextButton("\uD83D\uDDD1\uFE0F") {
                     if (!justDeleted && activeIndex != -1) {
                         val intent = Intent(this@EditStationList, DeleteList::class.java)
-                        launcher.launch(intent)
+                        launchers[2].launch(intent)
                     }
                 }
             }
