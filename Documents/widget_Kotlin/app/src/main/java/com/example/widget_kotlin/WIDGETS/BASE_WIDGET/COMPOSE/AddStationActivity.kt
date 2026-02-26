@@ -3,6 +3,7 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 import BACKEND.Rest.ScrapperController
 import androidx.core.content.edit
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
@@ -21,26 +23,21 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Callback
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 
 
 class AddStationActivity: ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val list = getStationList()
+        val index = intent.getIntExtra("indexEditStation", -1)
+        Log.d("fuck", list[index].name)
         setContent{
             InputScreen()
         }
     }
     @Composable
     private fun InputScreen(){
-
-        val updater = WidgetUpdater(SelectorGlance::class.java)
-        val updaterBase = WidgetUpdater(BaseGlance::class.java)
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}
@@ -82,10 +79,7 @@ class AddStationActivity: ComponentActivity() {
                             if(!text.isEmpty() && !listHasName(text)){
                                 StationLabel = text
                                 saveToPreferences(ID, StationLabel)
-                                lifecycleScope.launch(Dispatchers.Default) {
-                                    updater.updateWidget(this@AddStationActivity)
-                                    finish()
-                                }
+                                finish()
                             }
                             else{
                                 error = true
@@ -118,16 +112,6 @@ class AddStationActivity: ComponentActivity() {
 
     }
 
-
-    private fun ReceiveData(stopID: String, call: Callback) {
-        val client = OkHttpClient()
-        val url = "http://100.114.8.24:8080/api/scrap"
-        val jsonBody = "{\"stop\":\"$stopID\"}".trimIndent()
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-        val requestBody = jsonBody.toRequestBody(mediaType)
-        val request = Request.Builder().url(url).post(requestBody).build()
-        client.newCall(request).enqueue(call)
-    }
 
     private fun saveToPreferences(ID:String, Name:String){
         val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
@@ -168,4 +152,14 @@ class AddStationActivity: ComponentActivity() {
         return listIds.contains(Name)
     }
 
+    private fun getStationList():ArrayList<ListPair>{
+        val gson = Gson()
+
+        val list: ArrayList<ListPair> =
+            gson.fromJson(
+                intent.getStringExtra("listEditStation"),
+                object : TypeToken<ArrayList<ListPair>>() {}.type
+            )
+        return list;
+    }
 }

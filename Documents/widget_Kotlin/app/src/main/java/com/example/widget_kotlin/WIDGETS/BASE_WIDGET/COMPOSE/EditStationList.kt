@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -37,18 +38,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class EditStationList: ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //removeList()
+        setFinishOnTouchOutside(false)
+        val updater = WidgetUpdater(SelectorGlance::class.java)
         setContent{
             Input()
+//add a way to change the active list
+            BackHandler {
+                lifecycleScope.launch(Dispatchers.Default) {
+                    updater.updateWidget(this@EditStationList)
+                    finish()
+                }
+            }
+
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
     @Composable
     private fun Input() {
@@ -108,7 +127,16 @@ class EditStationList: ComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                BorderedTextButton("➕") {}
+                BorderedTextButton("➕") {
+                    if(!justDeleted){
+                        val intent = Intent(this@EditStationList, AddStationActivity::class.java)
+                        val gson = Gson()
+                        val json = gson.toJson(list)
+                        intent.putExtra("listEditStation", json)
+                        intent.putExtra("indexEditStation", activeIndex)
+                        launcher.launch(intent)
+                    }
+                }
                 BorderedTextButton("➖") {}
                 BorderedTextButton("\uD83D\uDDD1\uFE0F") {
                     if (!justDeleted && activeIndex != -1) {
@@ -137,7 +165,7 @@ class EditStationList: ComponentActivity() {
 
         var expanded by remember { mutableStateOf(false) }
 
-        val launcher = startResultActivity({ updateList(getStationLists());}, {},
+        val launcher = startResultActivity({ updateList(getStationLists()); onClick(list.size-1)}, {},
             { intent->
                 val name = intent?.getStringExtra("name") ?: ""
                 selectedOption = name
