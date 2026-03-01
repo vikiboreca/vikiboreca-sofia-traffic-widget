@@ -136,7 +136,7 @@ class EditStationList: ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BorderedTextButton("➕") {
-                    if(!justDeleted){
+                    if(!justDeleted && activeIndex!=-1){
                         val intent = Intent(this@EditStationList, AddStationActivity::class.java)
                         val gson = Gson()
                         val json = gson.toJson(list)
@@ -146,8 +146,14 @@ class EditStationList: ComponentActivity() {
                     }
                 }
                 BorderedTextButton("➖") {
-                    //TODO(code code code)
-                    //launchers[1].launch(intent)
+                    if(!justDeleted && activeIndex!=-1){
+                        val intent = Intent(this@EditStationList, RemoveStationActivity::class.java)
+                        val gson = Gson()
+                        val json = gson.toJson(list)
+                        intent.putExtra("listEditStation", json)
+                        intent.putExtra("indexEditStation", activeIndex)
+                        launchers[1].launch(intent)
+                    }
                 }
                 BorderedTextButton("\uD83D\uDDD1\uFE0F") {
                     if (!justDeleted && activeIndex != -1) {
@@ -252,10 +258,10 @@ class EditStationList: ComponentActivity() {
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-//            Log.d("LAUNCHER_DEBUG", "launcher CREATED")
-//            Log.d("RESULT_DEBUG", "code=${result.resultCode}")
-//            Log.d("RESULT_DEBUG", "data=${result.data}")
-//            Log.d("RESULT_DEBUG", "success=${result.data?.getBooleanExtra("success", false)}")
+            Log.d("LAUNCHER_DEBUG", "launcher CREATED")
+            Log.d("RESULT_DEBUG", "code=${result.resultCode}")
+            Log.d("RESULT_DEBUG", "data=${result.data}")
+            Log.d("RESULT_DEBUG", "success=${result.data?.getBooleanExtra("success", false)}")
             if (result.resultCode == RESULT_OK) {
                 val success =
                     result.data?.getBooleanExtra("success", false) ?: false
