@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -49,18 +50,15 @@ import kotlinx.coroutines.launch
 
 class EditStationList: ComponentActivity() {
 
+    val updater = WidgetUpdater(SelectorGlance::class.java)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setFinishOnTouchOutside(false)
-        val updater = WidgetUpdater(SelectorGlance::class.java)
         setContent{
+            //removeList()
             Input()
-//add a way to change the active list
             BackHandler {
-                lifecycleScope.launch(Dispatchers.Default) {
-                    updater.updateWidget(this@EditStationList)
-                    finish()
-                }
+                exit()
             }
 
         }
@@ -76,13 +74,14 @@ class EditStationList: ComponentActivity() {
         var activeIndex by remember { mutableIntStateOf(if (list.isNotEmpty()) 0 else -1) }
         var changeName by remember { mutableStateOf("") }
 
-        val launcher1 = startResultActivity({}, {}, )
-        {
-            intent->
-            val gson = Gson()
-            val name = intent?.getStringExtra("list") ?: ""
-            list = gson.fromJson(name, object : TypeToken<ArrayList<ListPair>>() {}.type)
-        }
+        val launcher1 = startResultActivity(pass = {}, fail = {}, onExtra =
+            {
+                intent->
+                val gson = Gson()
+                val name = intent?.getStringExtra("list") ?: ""
+                list = gson.fromJson(name, object : TypeToken<ArrayList<ListPair>>() {}.type)
+                savePureList(list)
+            })
         val launcher2 = startResultActivity({}, {}, {})
         val launcher3 = startResultActivity(
             pass = {
@@ -154,6 +153,13 @@ class EditStationList: ComponentActivity() {
                     if (!justDeleted && activeIndex != -1) {
                         val intent = Intent(this@EditStationList, DeleteList::class.java)
                         launchers[2].launch(intent)
+                    }
+                }
+
+                BorderedTextButton("✔\uFE0F") {
+                    if(!justDeleted && activeIndex != -1){
+                        saveActiveList(list, activeIndex)
+                        exit()
                     }
                 }
             }
@@ -246,6 +252,10 @@ class EditStationList: ComponentActivity() {
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
+//            Log.d("LAUNCHER_DEBUG", "launcher CREATED")
+//            Log.d("RESULT_DEBUG", "code=${result.resultCode}")
+//            Log.d("RESULT_DEBUG", "data=${result.data}")
+//            Log.d("RESULT_DEBUG", "success=${result.data?.getBooleanExtra("success", false)}")
             if (result.resultCode == RESULT_OK) {
                 val success =
                     result.data?.getBooleanExtra("success", false) ?: false
@@ -303,4 +313,19 @@ class EditStationList: ComponentActivity() {
         }
     }
 
+    private fun saveActiveList(list:ArrayList<ListPair>, index:Int){
+        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val gson = Gson()
+        prefs.edit{
+            putString("PairListName", list[index].name)
+            putString("PairList", gson.toJson(list[index].list))
+        }
+    }
+
+    private fun exit (){
+        lifecycleScope.launch(Dispatchers.Default) {
+            updater.updateWidget(this@EditStationList)
+            finish()
+        }
+    }
 }

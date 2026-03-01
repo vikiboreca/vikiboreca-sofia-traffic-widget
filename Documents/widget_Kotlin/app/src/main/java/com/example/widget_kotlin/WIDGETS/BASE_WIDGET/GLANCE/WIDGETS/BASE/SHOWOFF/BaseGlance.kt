@@ -84,7 +84,7 @@ class BaseGlance : GlanceAppWidget() {
             val size = LocalSize.current
             val ratio = DpSize((size.width / standard.width).dp, (size.height / standard.height).dp)
             Log.d("nigger", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
-            var scale = if(isMetroStation){1.15f}else{setScale(busList, ratio, size)}
+            var scale = if(isMetroStation){1.1f}else{setScale(busList, ratio, size)}
             if(busList.isEmpty()){scale = 1f}
 
             val busDisplay: @Composable () -> Unit = {

@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.core.content.edit
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -59,7 +60,7 @@ class SelectorGlance: BaseWidget() {
         val chosenName = prefs[stringPreferencesKey("chosenStation")] ?: ""
         val realChosenName = getCurrentStationPair(context)
             Scaffold (
-                titleBar = { CustomTitleBar("ListName", id) },
+                titleBar = { CustomTitleBar(getListName(context), id) },
                 backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
                 content = { ContentDisplay(context, id, list, realChosenName) }
             )
@@ -80,6 +81,10 @@ class SelectorGlance: BaseWidget() {
             return gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
         }
         return ArrayList()
+    }
+    private fun getListName(context:Context):String{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        return prefs.getString("PairListName", "no list") ?: "no list"
     }
     private fun saveCurrentStation(context: Context,pairAdvanced: StationPairAdvanced){
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)

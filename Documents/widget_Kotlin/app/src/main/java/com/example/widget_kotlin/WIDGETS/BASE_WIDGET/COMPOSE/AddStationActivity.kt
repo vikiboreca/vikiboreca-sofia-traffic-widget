@@ -35,11 +35,15 @@ class AddStationActivity: ComponentActivity() {
         val index = intent.getIntExtra("indexEditStation", -1)
         //Log.d("fuck", list[index].name)
         setContent{
-            InputScreen(list, list[index])
+            InputScreen(list, list[index], index)
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
     @Composable
-    private fun InputScreen(list:ArrayList<ListPair>, pair:ListPair){
+    private fun InputScreen(list:ArrayList<ListPair>, pair:ListPair, index:Int){
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}
@@ -66,7 +70,7 @@ class AddStationActivity: ComponentActivity() {
                     Button(onClick = {
                         if(ID.isEmpty()){
                             IsIDValid(
-                                text,
+                                text,pair.list,
                                 onValid = { saveID ->
                                     ID = saveID; text = ""; error = false
                                     label = "Type Station Name"
@@ -78,9 +82,9 @@ class AddStationActivity: ComponentActivity() {
                             )
                         }
                         else{
-                            if(!text.isEmpty() && !listHasName(text)){
+                            if(!text.isEmpty() && !listHasName(text, pair.list)){
                                 StationLabel = text
-                                save(ID, StationLabel, list, pair)
+                                save(ID, StationLabel, list, pair, index)
                             }
                             else{
                                 error = true
@@ -94,12 +98,12 @@ class AddStationActivity: ComponentActivity() {
                 }
             }
     }
-    private fun IsIDValid(id:String, onValid:(saveID:String)->Unit, onError:()->Unit){
+    private fun IsIDValid(id:String, list:ArrayList<StationPairAdvanced>, onValid:(saveID:String)->Unit, onError:()->Unit){
         if(id.isEmpty() || id.length>4) {runOnUiThread { onError();}; return}
         id.forEach { it ->
             if(!it.isDigit()) {runOnUiThread { onError();}; return}
         }
-        if(listHasID(id)) {runOnUiThread { onError();}; return}
+        if(listHasID(id, list)) {runOnUiThread { onError();}; return}
         val realID = id
         val scrapperController = ScrapperController()
         lifecycleScope.launch {
@@ -114,33 +118,23 @@ class AddStationActivity: ComponentActivity() {
     }
 
 
-    private fun save(ID:String, Name:String, list:ArrayList<ListPair>, listPair:ListPair){
+    private fun save(ID:String, Name:String, list:ArrayList<ListPair>, listPair:ListPair, index:Int){
         val gson = Gson()
         val pair = StationPairAdvanced(StationPair(ID, Name))
         listPair.list.add(pair)
+        list[index] = listPair
         val intent = Intent().apply { putExtra("success", true); putExtra("list", gson.toJson(list))}
         setResult(RESULT_OK, intent)
 
         finish()
     }
 
-    private fun listHasID(ID:String):Boolean{
-        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
-        val gson = Gson()
-        val listString = prefs.getString("PairList", null)
-        if(listString.isNullOrEmpty()) return false
-        val list:ArrayList<StationPairAdvanced> = gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
+    private fun listHasID(ID:String, list:ArrayList<StationPairAdvanced>):Boolean{
         val listOriginals = list.map{it.original}
         val listIds = listOriginals.map{it.ID}
         return listIds.contains(ID)
     }
-    private fun listHasName(Name:String):Boolean {
-        val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
-        val gson = Gson()
-        val listString = prefs.getString("PairList", null)
-        if (listString.isNullOrEmpty()) return false
-        val list: ArrayList<StationPairAdvanced> =
-            gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
+    private fun listHasName(Name:String, list:ArrayList<StationPairAdvanced>):Boolean {
         val listOriginals = list.map{it.original}
         val listIds = listOriginals.map{it.Name}
         return listIds.contains(Name)
