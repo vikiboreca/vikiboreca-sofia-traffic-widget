@@ -72,7 +72,7 @@ class EditStationList: ComponentActivity() {
     private fun Input() {
         var list by remember { mutableStateOf(getPureStationLists().apply { add(ListPair("Create a new list", ArrayList())) }) }
         var justDeleted by remember { mutableStateOf(false) }
-        var activeIndex by remember { mutableIntStateOf(if (list.isNotEmpty()) 0 else -1) }
+        var activeIndex by remember { mutableIntStateOf(if (list.size>1) 0 else -1) }
         var changeName by remember { mutableStateOf("") }
 
         val launcher1 = startResultActivity(pass = {}, fail = {}, onExtra =
@@ -181,7 +181,7 @@ class EditStationList: ComponentActivity() {
                         saveActiveList(list, activeIndex)
                     }
                     else{
-                        if(justDeleted && activeIndex == -1){
+                        if((justDeleted && activeIndex == -1) || list.size <= 1){
                             saveActiveList()
                         }
                     }
@@ -351,8 +351,8 @@ class EditStationList: ComponentActivity() {
         val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)
         val gson = Gson()
         prefs.edit{
-            putString("PairListName", "no selected list")
-            putString("PairList", gson.toJson(""))
+            putString("PairListName", "Create a new list")
+            putString("PairList", null)
         }
     }
 
