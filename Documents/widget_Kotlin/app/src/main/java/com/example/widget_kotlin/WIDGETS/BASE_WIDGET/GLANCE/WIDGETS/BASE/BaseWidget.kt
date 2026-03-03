@@ -3,11 +3,15 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceTheme
+import androidx.glance.LocalSize
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import androidx.glance.currentState
 import androidx.glance.state.GlanceStateDefinition
@@ -17,9 +21,14 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTO
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 
 open class BaseWidget: GlanceAppWidget() {
+    override val sizeMode: SizeMode
+        get() = SizeMode.Exact
+
     override var stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
     val selectorUpdater = WidgetUpdater(SelectorGlance::class.java)
     val basicUpdater = WidgetUpdater(BaseGlance::class.java)
+
+    val standard = DpSize(192.dp, 225.dp)
 
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {

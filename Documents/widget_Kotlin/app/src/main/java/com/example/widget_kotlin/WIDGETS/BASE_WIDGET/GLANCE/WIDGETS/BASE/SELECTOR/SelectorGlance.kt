@@ -6,12 +6,14 @@ import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -50,18 +52,21 @@ class SelectorGlance: BaseWidget() {
     @Composable
     override fun UIContent(context: Context, id: GlanceId, prefs:Preferences) {
         //ClearList(context)
-        Log.d("fuck", "update")
         val list = getList(context)
         val listName = getListName(context)
-        Log.d("fuck2", "${list.size}")
-        Log.d("fuck2", listName)
         val chosenName = prefs[stringPreferencesKey("chosenStation")] ?: ""
         val realChosenName = getCurrentStationPair(context)
-            Scaffold (
-                titleBar = { CustomTitleBar(listName, id) },
-                backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
-                content = { ContentDisplay(context, id, list, realChosenName) }
-            )
+
+        val size = LocalSize.current
+        val ratio = DpSize((size.width / standard.width).dp, (size.height / standard.height).dp)
+        val lists = getLists(list, size)
+        Log.d("fuck", lists.size.toString())
+
+        Scaffold (
+            titleBar = { CustomTitleBar(listName, id) },
+            backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
+            content = { ContentDisplay(context, id, list, realChosenName) }
+        )
     }
 
     private fun ClearList(context: Context){
@@ -85,6 +90,29 @@ class SelectorGlance: BaseWidget() {
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         return prefs.getString("PairListName", "no list") ?: "no list"
     }
+
+    private fun getLists(list:ArrayList<StationPairAdvanced>, size:DpSize):ArrayList<ArrayList<StationPairAdvanced>>{
+        val start:Int = size.height.value.toInt()/100 - 2
+        var cycles = if(start == 0) 4 else 2
+        if(start == 3) cycles = 1
+        val l:List<Int> = listOf(6, 11, 15, 20)
+        var idx = 0
+        val lists:ArrayList<ArrayList<StationPairAdvanced>> = ArrayList()
+        for(i in 0 until cycles){
+            val stationList: ArrayList<StationPairAdvanced> = ArrayList()
+            for(j in 0 until l[start]){
+                stationList.add(list[idx])
+                idx++
+                if(idx>=list.size){
+                    lists.add(stationList); break;
+                }
+            }
+            if(idx>=list.size) break;
+            lists.add(stationList)
+        }
+        return lists
+    }
+
     private fun saveCurrentStation(context: Context,pairAdvanced: StationPairAdvanced){
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         val gson = Gson()
@@ -142,7 +170,6 @@ class SelectorGlance: BaseWidget() {
     @Composable
     private fun ContentDisplay(context:Context, id: GlanceId, list:ArrayList<StationPairAdvanced>, realChosenName:String){
         Column {
-            //ClearList(context)
             var itemCount = 0
             val maxRows = 10
             var rowsLeft = list.size
@@ -192,8 +219,5 @@ class SelectorGlance: BaseWidget() {
                 }
             }
         }
-        //onClick = actionStartActivity<AddStationActivity>()
-        //onClick = {ClearList(context)}
-
     }
 }

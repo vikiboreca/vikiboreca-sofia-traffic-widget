@@ -83,8 +83,9 @@ class BaseGlance : GlanceAppWidget() {
             val standard = DpSize(192.dp, 225.dp)
             val size = LocalSize.current
             val ratio = DpSize((size.width / standard.width).dp, (size.height / standard.height).dp)
+
             Log.d("nigger", "Current: width=${size.width.value}dp, height=${size.height.value}dp")
-            var scale = if(isMetroStation){1.1f}else{setScale(busList, ratio, size)}
+            var scale = if(isMetroStation){1.15f}else{setScale(busList, ratio, size)}
             if(busList.isEmpty()){scale = 1f}
 
             val busDisplay: @Composable () -> Unit = {
@@ -163,7 +164,7 @@ class BaseGlance : GlanceAppWidget() {
                                 Column(GlanceModifier.padding(top = 15.dp)){
                                     BusBox(metroList[0].metro, scale)
                                 }
-                                DisplayMetroStations(metroList[0], 26)
+                                DisplayMetroStations(metroList[0])
                             }
                         }
 
@@ -176,7 +177,7 @@ class BaseGlance : GlanceAppWidget() {
                                     Column(GlanceModifier.padding(top = 15.dp)){
                                         BusBox(entry.metro, scale)
                                     }
-                                    DisplayMetroStations(entry, 26)
+                                    DisplayMetroStations(entry)
                                 }
                             }
                         }
@@ -379,19 +380,19 @@ class BaseGlance : GlanceAppWidget() {
         Spacer(modifier = GlanceModifier.height(6.dp))
     }
     @Composable
-    private fun DisplayMetroStations(metro: MetroEntry, size:Int){
+    private fun DisplayMetroStations(metro: MetroEntry){
         val func: @Composable (list:ArrayList<MetroArriveTime>) -> Unit = {
             it ->
             Row(GlanceModifier.padding(start = 4.dp)){
                 it.forEachIndexed { index,it ->
-                    Text(it.minutes.toString(), style = TextStyle(fontSize = size.sp),
+                    Text(it.minutes.toString(), style = TextStyle(fontSize = 25.sp),
                         modifier = GlanceModifier.clickable(actionRunCallback<PopUpButton>(
                             parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to it.direction,
                                 ActionParameters.Key<String>("busStop") to it.normalDirection,
                                 ActionParameters.Key<String>("isMetro") to "true")
                         )))
                     if(index!=metro.direction.lastIndex){
-                        Text(", ", style = TextStyle(fontSize = size.sp))
+                        Text(", ", style = TextStyle(fontSize = 25.sp))
                     }
                 }
             }

@@ -3,6 +3,7 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.activity.compose.BackHandler
@@ -147,7 +148,7 @@ class EditStationList: ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BorderedTextButton("➕") {
-                    if(!justDeleted && activeIndex!=-1){
+                    if(!justDeleted && activeIndex!=-1 && list[activeIndex].list.size<20){
                         val intent = Intent(this@EditStationList, AddStationActivity::class.java)
                         val gson = Gson()
                         val json = gson.toJson(list)
@@ -155,15 +156,25 @@ class EditStationList: ComponentActivity() {
                         intent.putExtra("indexEditStation", activeIndex)
                         launchers[0].launch(intent)
                     }
+                    else{
+                        if(!justDeleted && list[activeIndex].list.size>=20){
+                            Toast.makeText(this@EditStationList, "Max 20 stations", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
                 BorderedTextButton("➖") {
-                    if(!justDeleted && activeIndex!=-1){
+                    if(!justDeleted && activeIndex!=-1 && list[activeIndex].list.isNotEmpty()){
                         val intent = Intent(this@EditStationList, RemoveStationActivity::class.java)
                         val gson = Gson()
                         val json = gson.toJson(list)
                         intent.putExtra("listEditStation", json)
                         intent.putExtra("indexEditStation", activeIndex)
                         launchers[1].launch(intent)
+                    }
+                    else{
+                        if(!justDeleted && list[activeIndex].list.isEmpty()){
+                            Toast.makeText(this@EditStationList, "You don't have stations to delete", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
                 BorderedTextButton("\uD83D\uDDD1\uFE0F") {
