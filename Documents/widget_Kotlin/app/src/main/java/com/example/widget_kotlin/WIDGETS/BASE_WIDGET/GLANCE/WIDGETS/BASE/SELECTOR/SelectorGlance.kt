@@ -91,11 +91,9 @@ class SelectorGlance : BaseWidget() {
                     lastHeight != -1 && lastHeight != currentHeight -> {
                         state[ActiveIndexKey] = 0
                         state[LastHeightKey] = currentHeight
-                        selectorUpdater.updateWidget(context)
                     }
                     lastHeight == -1 -> {
                         state[LastHeightKey] = currentHeight
-                        selectorUpdater.updateWidget(context)
                     }
                 }
             }
@@ -176,19 +174,14 @@ class SelectorGlance : BaseWidget() {
                 text = "\uD83D\uDD04",
                 style = TextStyle(fontSize = 20.sp, color = ColorProvider(Color.Black, Color.White), fontWeight = FontWeight.Bold),
                 modifier = GlanceModifier.clickable {
-                    Log.d("fuck", "fuck")
                     if(list.isNotEmpty())
                     {
-                        Log.d("fuck", "fuck2")
                         CoroutineScope(Dispatchers.Default).launch {
-                            Log.d("fuck", "fuck3")
                             updateAppWidgetState(context, glanceId) { prefsState ->
                                 var index = prefsState[ActiveIndexKey] ?: 0
-                                Log.d("fuck", "$index")
                                 index = (index + 1) % list.size
                                 prefsState[ActiveIndexKey] = index
                             }
-                            Log.d("fuck", "fuck4")
                             selectorUpdater.updateWidget(context)
                         }
                     }
