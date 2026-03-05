@@ -6,7 +6,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -44,6 +43,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.google.gson.Gson
@@ -76,7 +76,7 @@ class EditStationList: ComponentActivity() {
         var activeIndex by remember { mutableIntStateOf(if (list.size>1) 0 else -1) }
         var changeName by remember { mutableStateOf("") }
 
-        val launcher1 = startResultActivity(pass = {}, fail = {}, onExtra =
+        val launcher1 = ActivityStarter.startResultActivity(pass = {}, fail = {}, onExtra =
             {
                 intent->
                 val gson = Gson()
@@ -84,7 +84,7 @@ class EditStationList: ComponentActivity() {
                 list = gson.fromJson(name, object : TypeToken<ArrayList<ListPair>>() {}.type)
                 savePureList(list)
             })
-        val launcher2 = startResultActivity({}, {},
+        val launcher2 = ActivityStarter.startResultActivity({}, {},
             {
                 intent->
                 val gson = Gson()
@@ -95,7 +95,7 @@ class EditStationList: ComponentActivity() {
                 savePureList(list)
             }
         )
-        val launcher3 = startResultActivity(
+        val launcher3 = ActivityStarter.startResultActivity(
             pass = {
                 if (activeIndex != -1 && activeIndex < list.size) {
                     list.removeAt(activeIndex)
@@ -179,10 +179,7 @@ class EditStationList: ComponentActivity() {
                 }
                 BorderedTextButton("\uD83D\uDDD1\uFE0F") {
                     if (!justDeleted && activeIndex != -1) {
-                        val intent = Intent(this@EditStationList, DeleteActivity::class.java).apply {
-                            putExtra(DeleteActivity.TITLE, "Delete list")
-                            putExtra(DeleteActivity.MESSAGE, "Are you sure you want to delete this list")
-                        }
+                        val intent = AcceptActivity.createActivity(this@EditStationList, "Delete list", "Are you sure you want to delete this list", "Cancel", "Delete")
                         launchers[2].launch(intent)
                     }
                 }
@@ -219,7 +216,7 @@ class EditStationList: ComponentActivity() {
 
         var expanded by remember { mutableStateOf(false) }
 
-        val launcher = startResultActivity({ updateList(getStationLists()); onClick(list.size-1)}, {},
+        val launcher = ActivityStarter.startResultActivity({ updateList(getStationLists()); onClick(list.size-1)}, {},
             { intent->
                 val name = intent?.getStringExtra("name") ?: ""
                 selectedOption = name
@@ -282,33 +279,6 @@ class EditStationList: ComponentActivity() {
                 .padding(horizontal = 8.dp, vertical = 4.dp)
                 .clickable(onClick = action)
         )
-    }
-
-    @Composable
-    private fun startResultActivity(pass:()->Unit, fail:()->Unit = {}, onExtra: ((Intent?) -> Unit)? = null): ManagedActivityResultLauncher<Intent, ActivityResult> {
-        val launcher = rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            Log.d("LAUNCHER_DEBUG", "launcher CREATED")
-            Log.d("RESULT_DEBUG", "code=${result.resultCode}")
-            Log.d("RESULT_DEBUG", "data=${result.data}")
-            Log.d("RESULT_DEBUG", "success=${result.data?.getBooleanExtra("success", false)}")
-            if (result.resultCode == RESULT_OK) {
-                val success =
-                    result.data?.getBooleanExtra("success", false) ?: false
-                if (success) {
-                    onExtra?.invoke(result.data)
-                    pass()
-                }
-                else{
-                    fail()
-                }
-            }
-            else if(result.resultCode == RESULT_CANCELED){
-                fail()
-            }
-        }
-        return launcher
     }
     private fun getStationLists(): ArrayList<ListPair> {
         val prefs = getSharedPreferences("bus_widget", MODE_PRIVATE)

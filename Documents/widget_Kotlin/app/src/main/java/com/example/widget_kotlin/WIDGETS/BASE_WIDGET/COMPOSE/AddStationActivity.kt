@@ -50,9 +50,12 @@ class AddStationActivity: ComponentActivity() {
         var label by remember{mutableStateOf("Type Station ID")}
         var error by remember {mutableStateOf(false)}
 
-        
-
-            MaterialTheme {
+        var displayContent by remember { mutableIntStateOf(1) }
+        var save1 by remember { mutableStateOf({}) }
+        var content2 by remember { mutableStateOf({}) }
+        var content1 by remember {
+            mutableStateOf(@Composable
+            {
                 Column(
                     modifier = Modifier.wrapContentSize(),
                     verticalArrangement = Arrangement.Center,
@@ -84,7 +87,8 @@ class AddStationActivity: ComponentActivity() {
                         else{
                             if(!text.isEmpty() && !listHasName(text, pair.list)){
                                 StationLabel = text
-                                save(ID, StationLabel, list, pair, index)
+                                save1 = {save(ID, StationLabel, list, pair, index)}
+                                displayContent = 2
                             }
                             else{
                                 error = true
@@ -95,6 +99,13 @@ class AddStationActivity: ComponentActivity() {
                     {
                         Text("Click me")
                     }
+                }
+            })
+        }
+            MaterialTheme {
+                when(displayContent){
+                    1->content1()
+                    2->content2()
                 }
             }
     }

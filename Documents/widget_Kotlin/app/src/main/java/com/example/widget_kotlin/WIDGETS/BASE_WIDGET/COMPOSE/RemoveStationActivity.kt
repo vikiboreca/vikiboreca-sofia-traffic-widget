@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -30,7 +29,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -64,13 +63,12 @@ class RemoveStationActivity: ComponentActivity() {
         var activeList:ArrayList<StationPairAdvanced> by remember { mutableStateOf(list[index].list) }
         var activePair: StationPairAdvanced? by remember {mutableStateOf(null) }
         var changeName by remember {mutableStateOf("")}
-        val launcher = startResultActivity({
+        val launcher = ActivityStarter.startResultActivity({
             activeList.remove(activePair)
-            if(!activeList.isEmpty()){
+            if (!activeList.isEmpty()) {
                 changeName = activeList[0].original.Name
                 activePair = activeList[0]
-            }
-            else{
+            } else {
                 changeName = "no available stations"
                 activePair = null
             }
@@ -99,10 +97,7 @@ class RemoveStationActivity: ComponentActivity() {
                 BorderedTextButton("\uD83D\uDDD1\uFE0F")
                 {
                     if(activePair!=null){
-                        val intent = Intent(this@RemoveStationActivity, DeleteActivity::class.java).apply {
-                            putExtra(DeleteActivity.TITLE, "Delete station")
-                            putExtra(DeleteActivity.MESSAGE, "Are you sure you want to delete this station")
-                        }
+                        val intent = AcceptActivity.createActivity(this@RemoveStationActivity, "Delete station", "Are you sure you want to delete this station", "Cancel", "Delete")
                         launcher.launch(intent)
                     }
                 }
@@ -170,33 +165,6 @@ class RemoveStationActivity: ComponentActivity() {
                 .padding(horizontal = 8.dp, vertical = 4.dp)
                 .clickable(onClick = action)
         )
-    }
-
-    @Composable
-    private fun startResultActivity(pass:()->Unit, fail:()->Unit = {}, onExtra: ((Intent?) -> Unit)? = null): ManagedActivityResultLauncher<Intent, ActivityResult> {
-        val launcher = rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            Log.d("LAUNCHER_DEBUG", "launcher CREATED")
-            Log.d("RESULT_DEBUG", "code=${result.resultCode}")
-            Log.d("RESULT_DEBUG", "data=${result.data}")
-            Log.d("RESULT_DEBUG", "success=${result.data?.getBooleanExtra("success", false)}")
-            if (result.resultCode == RESULT_OK) {
-                val success =
-                    result.data?.getBooleanExtra("success", false) ?: false
-                if (success) {
-                    onExtra?.invoke(result.data)
-                    pass()
-                }
-                else{
-                    fail()
-                }
-            }
-            else if(result.resultCode == RESULT_CANCELED){
-                fail()
-            }
-        }
-        return launcher
     }
     private fun getStationList():ArrayList<ListPair>{
         val gson = Gson()

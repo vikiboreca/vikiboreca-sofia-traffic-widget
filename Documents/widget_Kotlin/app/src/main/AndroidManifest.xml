@@ -88,7 +88,7 @@
             android:exported="true"
             android:theme="@style/Theme.Material3.DayNight.Dialog">
         </activity>
-        <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.DeleteActivity"
+        <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.AcceptActivity"
             android:exported="true"
             android:theme="@style/Theme.Material3.DayNight.Dialog"
             >

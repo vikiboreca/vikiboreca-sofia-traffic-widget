@@ -38,7 +38,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.EditStationList
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.EditStationButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.BaseWidget
 import com.google.gson.Gson
@@ -73,7 +72,7 @@ class SelectorGlance : BaseWidget() {
 
         val stationList = if (lists.isNotEmpty()) lists[activeIndex] else ArrayList()
 
-        Log.d("SelectorGlance", "lists.size=${lists.size}, activeIndex=$activeIndex")
+        //Log.d("SelectorGlance", "lists.size=${lists.size}, activeIndex=$activeIndex")
 
         Scaffold(
             titleBar = { CustomTitleBar(context, listName, id, lists) },
@@ -117,6 +116,7 @@ class SelectorGlance : BaseWidget() {
     }
 
     private fun getLists(list: ArrayList<StationPairAdvanced>, size: DpSize): ArrayList<ArrayList<StationPairAdvanced>> {
+        if(list.isEmpty()) return ArrayList()
         val start: Int = size.height.value.toInt() / 100 - 2
         var cycles = if (start == 0) 4 else 2
         if (start == 3) cycles = 1
@@ -220,7 +220,7 @@ class SelectorGlance : BaseWidget() {
                 Column {
                     for (j in itemCount until currentTarget) {
                         val pairAdvanced = list[j]
-                        val pair = pairAdvanced.original
+                        val pair = pairAdvanced.current
                         itemCount++
                         Row(modifier = GlanceModifier.fillMaxWidth()) {
                             Text(
