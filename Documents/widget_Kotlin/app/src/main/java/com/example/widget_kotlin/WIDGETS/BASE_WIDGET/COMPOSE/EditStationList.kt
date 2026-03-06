@@ -149,12 +149,9 @@ class EditStationList: ComponentActivity() {
             ) {
                 BorderedTextButton("➕") {
                     if(!justDeleted && activeIndex!=-1 && list[activeIndex].list.size<20){
-                        val intent = Intent(this@EditStationList, AddStationActivity::class.java)
                         val gson = Gson()
                         val json = gson.toJson(list)
-                        intent.putExtra("listEditStation", json)
-                        intent.putExtra("indexEditStation", activeIndex)
-                        intent.putExtra("extraID", "")
+                        val intent = AddStationActivity.createActivity(this@EditStationList, json, activeIndex, "")
                         launchers[0].launch(intent)
                     }
                     else{

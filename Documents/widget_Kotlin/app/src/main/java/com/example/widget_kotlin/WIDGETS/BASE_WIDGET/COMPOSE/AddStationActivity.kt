@@ -1,12 +1,9 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
 import BACKEND.Rest.ScrapperController
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import androidx.core.content.edit
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -20,12 +17,8 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -36,8 +29,12 @@ class AddStationActivity: ComponentActivity() {
         val INDEX = "indexEditStation"
         val EXTRA = "extraID"
 
-        fun createActivity(context: Context, list:String, index:Int, extraID:String){
-            
+        fun createActivity(context: Context, list:String, index:Int, extraID:String):Intent{
+            val intent = Intent(context, AddStationActivity::class.java)
+            intent.putExtra(LIST, list)
+            intent.putExtra(INDEX, index)
+            intent.putExtra(EXTRA, extraID)
+            return intent
         }
     }
 
@@ -49,7 +46,7 @@ class AddStationActivity: ComponentActivity() {
         val extraID = intent.getStringExtra(EXTRA) ?: ""
         //Log.d("fuck", list[index].name)
         setContent{
-            InputScreen(list, list[index], index,extraID)
+            InputScreen(list, list[index], index, extraID)
         }
     }
 
@@ -66,7 +63,32 @@ class AddStationActivity: ComponentActivity() {
 
         var displayContent by remember { mutableIntStateOf(1) }
         var save1 by remember { mutableStateOf({}) }
-        val launcher = ActivityStarter.startResultActivity({displayContent = 3}, {save1(); finish()}, {})
+        val launcher1 = ActivityStarter.startResultActivity(
+            pass = {},
+            fail = {save1(); finish()},
+            onExtra = {intent ->
+                val s = intent?.getStringExtra("counter")
+                val p:StationPair = Gson().fromJson(s, object : TypeToken<StationPair>() {}.type)
+                save1()
+                save(p.ID, p.Name, list, pair, index, ID)
+                finish()
+            }
+        )
+
+
+        val launcher = ActivityStarter.startResultActivity(
+            {
+                val s = Gson().toJson(list)
+                val intent = createActivity(this@AddStationActivity, s, index, ID)
+                launcher1.launch(intent)
+            },
+            {
+                save1();
+                finish()
+            },
+            {
+
+            })
         var content2 by remember { mutableStateOf({
             val intent = AcceptActivity.createActivity(this@AddStationActivity, "Full pack?", "Add another counter station", "Decline", "Accept")
             launcher.launch(intent)
@@ -99,14 +121,23 @@ class AddStationActivity: ComponentActivity() {
                                 onError = {
                                     error = true
                                     label = "Insert a correct ID"
-                                }
+                                },
+                                extraID
                             )
                         }
                         else{
                             if(!text.isEmpty() && !listHasName(text, pair.list)){
-                                StationLabel = text
-                                save1 = {save(ID, StationLabel, list, pair, index, extraID)}
-                                displayContent = 2
+                                if(extraID.isEmpty()){
+                                    StationLabel = text
+                                    save1 = {save(ID, StationLabel, list, pair, index, extraID)}
+                                    displayContent = 2
+                                }
+                                else{
+                                    val pair = StationPair(ID, text)
+                                    val intent = Intent().apply { putExtra("success", true); putExtra("counter", Gson().toJson(pair)) }
+                                    setResult(RESULT_OK, intent)
+                                    finish()
+                                }
                             }
                             else{
                                 error = true
@@ -120,31 +151,33 @@ class AddStationActivity: ComponentActivity() {
                 }
             })
         }
-
-        var content3 by remember{
-            mutableStateOf(@Composable{
-
-            })
-        }
             MaterialTheme {
                 when(displayContent){
                     1->content1()
-                    2->content2()
-                    3->content3()
+                    2->if(extraID.isEmpty()) content2()
                 }
             }
     }
-    private fun IsIDValid(id:String, list:ArrayList<StationPairAdvanced>, onValid:(saveID:String)->Unit, onError:()->Unit){
+    private fun IsIDValid(id:String, list:ArrayList<StationPairAdvanced>, onValid:(saveID:String)->Unit, onError:()->Unit, extraID:String){
         if(id.isEmpty() || id.length>4) {runOnUiThread { onError();}; return}
+
         id.forEach { it ->
             if(!it.isDigit()) {runOnUiThread { onError();}; return}
         }
         if(listHasID(id, list)) {runOnUiThread { onError();}; return}
-        val realID = id
         val scrapperController = ScrapperController()
         lifecycleScope.launch {
             if(scrapperController.isIDValid(id)){
-                runOnUiThread { onValid(realID) }
+                if(extraID.isNotEmpty())
+                    if(id == extraID){
+                        runOnUiThread { onError();}
+                    }
+                    else{
+                        runOnUiThread { onValid(id);}
+                    }
+                else{
+                    runOnUiThread { onValid(id);}
+                }
             }
             else{
                 runOnUiThread { onError() }
@@ -169,8 +202,6 @@ class AddStationActivity: ComponentActivity() {
         }
         val intent = Intent().apply { putExtra("success", true); putExtra("list", gson.toJson(list))}
         setResult(RESULT_OK, intent)
-
-        finish()
     }
 
     private fun listHasID(ID:String, list:ArrayList<StationPairAdvanced>):Boolean{
