@@ -2,6 +2,7 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
 import BACKEND.Rest.ScrapperController
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import androidx.core.content.edit
 import android.os.Bundle
@@ -18,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
@@ -29,13 +31,25 @@ import kotlinx.coroutines.launch
 
 class AddStationActivity: ComponentActivity() {
 
+    companion object{
+        val LIST = "listEditStation"
+        val INDEX = "indexEditStation"
+        val EXTRA = "extraID"
+
+        fun createActivity(context: Context, list:String, index:Int, extraID:String){
+            
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setFinishOnTouchOutside(false)
         val list = getStationList()
-        val index = intent.getIntExtra("indexEditStation", -1)
+        val index = intent.getIntExtra(INDEX, -1)
+        val extraID = intent.getStringExtra(EXTRA) ?: ""
         //Log.d("fuck", list[index].name)
         setContent{
-            InputScreen(list, list[index], index)
+            InputScreen(list, list[index], index,extraID)
         }
     }
 
@@ -43,7 +57,7 @@ class AddStationActivity: ComponentActivity() {
         super.onDestroy()
     }
     @Composable
-    private fun InputScreen(list:ArrayList<ListPair>, pair:ListPair, index:Int){
+    private fun InputScreen(list:ArrayList<ListPair>, pair:ListPair, index:Int, extraID:String){
         var ID by remember {mutableStateOf("")}
         var StationLabel by remember {mutableStateOf("")}
         var text by remember {mutableStateOf("")}
@@ -52,7 +66,11 @@ class AddStationActivity: ComponentActivity() {
 
         var displayContent by remember { mutableIntStateOf(1) }
         var save1 by remember { mutableStateOf({}) }
-        var content2 by remember { mutableStateOf({}) }
+        val launcher = ActivityStarter.startResultActivity({displayContent = 3}, {save1(); finish()}, {})
+        var content2 by remember { mutableStateOf({
+            val intent = AcceptActivity.createActivity(this@AddStationActivity, "Full pack?", "Add another counter station", "Decline", "Accept")
+            launcher.launch(intent)
+        }) }
         var content1 by remember {
             mutableStateOf(@Composable
             {
@@ -87,7 +105,7 @@ class AddStationActivity: ComponentActivity() {
                         else{
                             if(!text.isEmpty() && !listHasName(text, pair.list)){
                                 StationLabel = text
-                                save1 = {save(ID, StationLabel, list, pair, index)}
+                                save1 = {save(ID, StationLabel, list, pair, index, extraID)}
                                 displayContent = 2
                             }
                             else{
@@ -102,10 +120,17 @@ class AddStationActivity: ComponentActivity() {
                 }
             })
         }
+
+        var content3 by remember{
+            mutableStateOf(@Composable{
+
+            })
+        }
             MaterialTheme {
                 when(displayContent){
                     1->content1()
                     2->content2()
+                    3->content3()
                 }
             }
     }
@@ -129,11 +154,19 @@ class AddStationActivity: ComponentActivity() {
     }
 
 
-    private fun save(ID:String, Name:String, list:ArrayList<ListPair>, listPair:ListPair, index:Int){
+    private fun save(ID:String, Name:String, list:ArrayList<ListPair>, listPair:ListPair, index:Int, checkerID:String){
         val gson = Gson()
-        val pair = StationPairAdvanced(StationPair(ID, Name))
-        listPair.list.add(pair)
-        list[index] = listPair
+        val pair: StationPairAdvanced
+
+        if(checkerID.isEmpty()){
+            pair = StationPairAdvanced(StationPair(ID, Name))
+            listPair.list.add(pair)
+            list[index] = listPair
+        }
+        else{
+            pair = listPair.list.first { it->it.original.ID == checkerID }
+            pair.counter = StationPair(ID, Name)
+        }
         val intent = Intent().apply { putExtra("success", true); putExtra("list", gson.toJson(list))}
         setResult(RESULT_OK, intent)
 
@@ -156,7 +189,7 @@ class AddStationActivity: ComponentActivity() {
 
         val list: ArrayList<ListPair> =
             gson.fromJson(
-                intent.getStringExtra("listEditStation"),
+                intent.getStringExtra(LIST),
                 object : TypeToken<ArrayList<ListPair>>() {}.type
             )
         return list;

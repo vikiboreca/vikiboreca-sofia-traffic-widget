@@ -154,6 +154,7 @@ class EditStationList: ComponentActivity() {
                         val json = gson.toJson(list)
                         intent.putExtra("listEditStation", json)
                         intent.putExtra("indexEditStation", activeIndex)
+                        intent.putExtra("extraID", "")
                         launchers[0].launch(intent)
                     }
                     else{

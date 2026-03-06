@@ -49,11 +49,7 @@
         <activity
             android:name=".WIDGETS.BASE_WIDGET.COMPOSE.PopUpActivity"
             android:exported="true"
-            android:theme="@style/Theme.Material3.DayNight.Dialog"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:launchMode="singleInstancePerTask"
-            android:taskAffinity="">
+            android:theme="@style/Theme.Material3.DayNight.Dialog">
         </activity>
         <activity
             android:name=".WIDGETS.BASE_WIDGET.COMPOSE.AddStationActivity"
@@ -62,27 +58,15 @@
         </activity>
         <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.EditStationActivity"
             android:exported="true"
-            android:theme="@style/Theme.Material3.DayNight.Dialog"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:launchMode="singleInstancePerTask"
-            android:taskAffinity="">
+            android:theme="@style/Theme.Material3.DayNight.Dialog">
         </activity>
         <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.CheckRandomStationActivity"
             android:exported="true"
-            android:theme="@style/Theme.Material3.DayNight.Dialog"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:launchMode="singleInstancePerTask"
-            android:taskAffinity="">
+            android:theme="@style/Theme.Material3.DayNight.Dialog">
         </activity>
         <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.EditStationList"
             android:exported="true"
-            android:theme="@style/Theme.Material3.DayNight.Dialog"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:launchMode="singleInstancePerTask"
-            android:taskAffinity="">
+            android:theme="@style/Theme.Material3.DayNight.Dialog">
         </activity>
         <activity android:name=".WIDGETS.BASE_WIDGET.COMPOSE.AddListStation"
             android:exported="true"

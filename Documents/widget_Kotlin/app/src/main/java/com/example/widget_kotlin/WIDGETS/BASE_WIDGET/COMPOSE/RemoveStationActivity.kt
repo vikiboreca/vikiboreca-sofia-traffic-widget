@@ -143,7 +143,7 @@ class RemoveStationActivity: ComponentActivity() {
                 onDismissRequest = { expanded = false }
             ){
                 list.forEach { pairAdvanced ->
-                    val name = pairAdvanced.original.Name
+                    val name = pairAdvanced.current.Name
                     DropdownMenuItem(text = { Text(name) },
                         onClick = {onClick(pairAdvanced); expanded = false; selectedOption = name})
                 }
