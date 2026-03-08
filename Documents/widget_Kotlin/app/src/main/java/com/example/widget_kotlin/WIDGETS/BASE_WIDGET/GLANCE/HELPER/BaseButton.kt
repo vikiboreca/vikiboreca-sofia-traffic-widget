@@ -45,7 +45,7 @@ class BaseButton : ActionCallback {
         if(currentPair!=null){
             try {
                 Log.d("fuck", "send ${currentPair.original}")
-                val map = getMap(context,currentPair.original.ID)
+                val map = getMap(context,currentPair.current.ID)
                 saveListMemory(context, map, glanceId)
                 updater.updateWidget(context)
             } catch (e: Exception) {
@@ -62,8 +62,8 @@ class BaseButton : ActionCallback {
         val currentPair = getCurrentStationPair(context)
         if(currentPair!=null){
             try {
-                Log.d("fuck", "send ${currentPair.original}")
-                val map = getMap(context,currentPair.original.ID)
+                Log.d("fuck", "send ${currentPair.current}")
+                val map = getMap(context,currentPair.current.ID)
                 for (id in glanceIds) {
                     if (id.toString() == glanceIdString) {
                         saveListMemory(context, map, id)

@@ -58,6 +58,7 @@ class SelectorGlance : BaseWidget() {
     override fun UIContent(context: Context, id: GlanceId, prefs: Preferences) {
 
         // Load data
+        //remove(context)
         val list = getList(context)
         val listName = getListName(context)
         val realChosenName = getCurrentStationPair(context)
@@ -100,6 +101,13 @@ class SelectorGlance : BaseWidget() {
     }
 
     private fun Color.toColorProvider() = ColorProvider(this, this)
+
+    private fun remove(context: Context){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        prefs.edit{
+            remove("PairList")
+        }
+    }
 
     private fun getList(context: Context): ArrayList<StationPairAdvanced> {
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
@@ -153,7 +161,7 @@ class SelectorGlance : BaseWidget() {
         val pairTextOriginal = prefs.getString("activeStation", "null")
         if (pairTextOriginal == "null") return ""
         val advanced: StationPairAdvanced? = gson.fromJson(pairTextOriginal, object : TypeToken<StationPairAdvanced>() {}.type)
-        return advanced?.original?.Name ?: ""
+        return advanced?.current?.Name ?: ""
     }
 
     @Composable

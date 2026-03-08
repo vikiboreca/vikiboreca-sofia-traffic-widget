@@ -4,6 +4,7 @@ import BACKEND.Rest.ScrapperController
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -35,6 +36,19 @@ class AddStationActivity: ComponentActivity() {
             intent.putExtra(INDEX, index)
             intent.putExtra(EXTRA, extraID)
             return intent
+        }
+        fun createActivity(context: Context, extraID:String):Intent{
+            val intent = Intent(context, AddStationActivity::class.java)
+            intent.putExtra(LIST, getPureStationLists(context))
+            intent.putExtra(INDEX, 0)
+            intent.putExtra(EXTRA, extraID)
+            return intent
+        }
+
+        private fun getPureStationLists(context: Context):String {
+            val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+            val gson = Gson()
+            return prefs.getString("pureStationLists", "") ?: ""
         }
     }
 
@@ -217,10 +231,11 @@ class AddStationActivity: ComponentActivity() {
 
     private fun getStationList():ArrayList<ListPair>{
         val gson = Gson()
-
+        val listString = intent.getStringExtra(LIST)
+        if(listString.isNullOrEmpty()) return ArrayList()
         val list: ArrayList<ListPair> =
             gson.fromJson(
-                intent.getStringExtra(LIST),
+                listString,
                 object : TypeToken<ArrayList<ListPair>>() {}.type
             )
         return list;

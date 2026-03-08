@@ -11,10 +11,10 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarte
 
 class EditStationButton: ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val pairText = parameters[ActionParameters.Key<String>("StationPair")]
+        val pairText = parameters[ActionParameters.Key<String>("StationPair")] ?: ""
         var ID: String = ""
         var Name: String = ""
-        if(!pairText.isNullOrEmpty()){
+        if(pairText.isNotEmpty()){
             val parts = pairText.split("\n")
             ID = parts[0]
             Name = parts[1]

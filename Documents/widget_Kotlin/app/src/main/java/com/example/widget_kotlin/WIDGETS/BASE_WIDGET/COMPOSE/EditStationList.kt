@@ -135,7 +135,7 @@ class EditStationList: ComponentActivity() {
         onSelectIndex: (Int) -> Unit,
         updateList:(ArrayList<ListPair>?)->Unit,
         changeName:String,
-        vararg launchers: ManagedActivityResultLauncher<Intent, ActivityResult>,
+        vararg launchers: ManagedActivityResultLauncher<Intent, ActivityResult>
     ) {
         Column {
             SimpleDropdown(list, onClick = onSelectIndex, updateList, changeName)

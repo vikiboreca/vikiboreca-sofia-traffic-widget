@@ -189,7 +189,7 @@ class BaseGlance : GlanceAppWidget() {
             GlanceTheme {
                 Scaffold(
                     titleBar = {
-                        val text = currentPair?.original?.Name ?: "Not selected"
+                        val text = currentPair?.current?.Name ?: "Not selected"
                         CustomTitleBar(text, id)
                     },
                     backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
