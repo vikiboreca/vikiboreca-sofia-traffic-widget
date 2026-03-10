@@ -47,11 +47,13 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class EditStationActivity: ComponentActivity() {
     val selectorUpdater = WidgetUpdater(SelectorGlance::class.java)
+    val baseUpdater = WidgetUpdater(BaseGlance::class.java)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setFinishOnTouchOutside(false)
@@ -84,7 +86,19 @@ class EditStationActivity: ComponentActivity() {
                 station = p
             })
 
-            val launcher2 = ActivityStarter.startResultActivity({},{},{})
+            val launcher2 = ActivityStarter.startResultActivity({},{},{
+                    intent->
+                val s = intent?.getStringExtra("counter")
+                val p:StationPair = Gson().fromJson(s, object : TypeToken<StationPair>() {}.type)
+                if(advancedStation.current.ID == advancedStation.original.ID){
+                    advancedStation.original = p
+                }
+                else{
+                    advancedStation.counter = p
+                }
+                advancedStation.current = p
+                station = p
+            })
 
             if(editStation!=null){
                 UIContent(station, advancedStation,{advancedStation.switchStations(); station = advancedStation.current}, launcher1, launcher2)
@@ -109,11 +123,19 @@ class EditStationActivity: ComponentActivity() {
 
                 BorderedTextButton("⚙\uFE0F")
                 {
+                    val intent:Intent;
                     if(isEmpty(stationPair))
                     {
-                        val intent = AddStationActivity.createActivity(this@EditStationActivity, advanced.original.ID)
+                        intent = AddStationActivity.createActivity(this@EditStationActivity, advanced.original.ID)
                         launchers[0].launch(intent)
                     }
+                    else{
+                        intent = Intent(this@EditStationActivity, RealEditStation::class.java)
+                        val original = stationPair.ID == advanced.original.ID
+                        intent.apply { putExtra("ID", stationPair.ID); putExtra("Name", stationPair.Name); putExtra("counter", !original) }
+                        launchers[1].launch(intent)
+                    }
+
                 }
 
                 BorderedTextButton("✔\uFE0F")
@@ -217,6 +239,7 @@ class EditStationActivity: ComponentActivity() {
         prefs.edit{
             putString("PairList", gson.toJson(list))
             putString("pureStationLists", gson.toJson(list2))
+            putString("activeStation", gson.toJson(pairAdvanced))
         }
     }
 
@@ -224,6 +247,7 @@ class EditStationActivity: ComponentActivity() {
         save(this@EditStationActivity, advanced, pair)
         lifecycleScope.launch(Dispatchers.Default) {
             selectorUpdater.updateWidget(this@EditStationActivity)
+            baseUpdater.updateWidget(this@EditStationActivity)
             finish()
         }
     }
