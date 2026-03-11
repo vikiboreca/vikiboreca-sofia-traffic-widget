@@ -46,6 +46,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.FILTERER.FiltererGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +55,8 @@ import kotlinx.coroutines.launch
 class EditStationActivity: ComponentActivity() {
     val selectorUpdater = WidgetUpdater(SelectorGlance::class.java)
     val baseUpdater = WidgetUpdater(BaseGlance::class.java)
+
+    val filterUpdater = WidgetUpdater(FiltererGlance::class.java)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setFinishOnTouchOutside(false)
@@ -248,6 +251,7 @@ class EditStationActivity: ComponentActivity() {
         lifecycleScope.launch(Dispatchers.Default) {
             selectorUpdater.updateWidget(this@EditStationActivity)
             baseUpdater.updateWidget(this@EditStationActivity)
+            filterUpdater.updateWidget(this@EditStationActivity)
             finish()
         }
     }

@@ -261,11 +261,10 @@ class SelectorGlance : BaseWidget() {
 
                                             if(state!=""){
                                                 val list = BaseButton().getTypes(context, pair.ID)
-                                                Log.d("fuck", list.toString())
+                                                saveTypes(context, list)
                                             }
-                                            else{
-
-                                            }
+                                            else saveTypes(context, null)
+                                            filtererUpdater.updateWidget(context)
                                         }
                                     }
                                 )
@@ -281,5 +280,13 @@ class SelectorGlance : BaseWidget() {
     private fun getGlanceId(context: Context):String{
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         return prefs.getString("glanceId","")?:""
+    }
+    private fun saveTypes(context: Context, list:ArrayList<Int>?){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+
+        prefs.edit{
+            if(list!=null) putString("currentTypes", Gson().toJson(list))
+            else putString("currentTypes", "")
+        }
     }
 }

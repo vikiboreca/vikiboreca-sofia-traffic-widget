@@ -17,6 +17,7 @@ import androidx.glance.currentState
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.FILTERER.FiltererGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 
@@ -27,6 +28,8 @@ open class BaseWidget: GlanceAppWidget() {
     override var stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
     val selectorUpdater = WidgetUpdater(SelectorGlance::class.java)
     val basicUpdater = WidgetUpdater(BaseGlance::class.java)
+
+    val filtererUpdater = WidgetUpdater(FiltererGlance::class.java)
 
     val standard = DpSize(192.dp, 225.dp)
 
