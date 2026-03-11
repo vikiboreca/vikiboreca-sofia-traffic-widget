@@ -1,5 +1,6 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF
 
+import androidx.core.content.edit
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.util.Log
@@ -72,6 +73,8 @@ class BaseGlance : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Standard is 192 x 225 dp for 3 buses at 24 sp with max 16 chars (15 for safety)
         provideContent {
+            saveGlanceID(context,id.toString())
+
             val busList = getMemoryList(context, id)
             val metroList = getMetroList(context, busList)
             val currentPair = getCurrentStationPair(context)
@@ -354,9 +357,9 @@ class BaseGlance : GlanceAppWidget() {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .background(Color(0xFFafd8f0)) // optional background
+                .background(Color(0xFFafd8f0))
                 .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.Vertical.CenterVertically // 👈 centers icon + text vertically
+            verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
             Text(
                 text = "\uD83D\uDD04",
@@ -403,4 +406,12 @@ class BaseGlance : GlanceAppWidget() {
         }
     }
     private fun Color.toColorProvider() = ColorProvider(this, this)
+
+    private fun saveGlanceID(context: Context,id:String){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+
+        prefs.edit{
+            putString("glanceId", id)
+        }
+    }
 }

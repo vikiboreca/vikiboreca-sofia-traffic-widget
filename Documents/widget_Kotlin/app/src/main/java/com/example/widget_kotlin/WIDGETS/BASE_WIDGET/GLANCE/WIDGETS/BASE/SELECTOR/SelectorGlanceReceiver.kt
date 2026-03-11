@@ -15,27 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SelectorGlanceReceiver : GlanceAppWidgetReceiver() {
-    val updater = WidgetUpdater(SelectorGlance::class.java)
     override val glanceAppWidget: GlanceAppWidget
         get() = SelectorGlance()
-
-//    override fun onAppWidgetOptionsChanged(
-//        context: Context,
-//        appWidgetManager: AppWidgetManager,
-//        appWidgetId: Int,
-//        newOptions: Bundle
-//    ) {
-//        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
-//        CoroutineScope(Dispatchers.Default).launch {
-//            val id = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
-//            updateAppWidgetState(
-//                context,
-//                id
-//            ){
-//                preferences ->
-//                preferences[Preferences.Key<String>("")] = ""
-//            }
-//        }
-//
-//    }
 }

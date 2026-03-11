@@ -79,6 +79,16 @@ class BaseButton : ActionCallback {
         }
     }
 
+    suspend fun getTypes(context: Context, id:String):ArrayList<Int>{
+        try{
+            val map = getMap(context, id)
+            val list = map.keys.map{it.type}.toHashSet().toList()
+            return ArrayList(list)
+        }catch(e:Exception){
+            return ArrayList()
+        }
+    }
+
 
     private fun ReceiveData(stopID: String, call: Callback) {
         CurrentStationID = stopID

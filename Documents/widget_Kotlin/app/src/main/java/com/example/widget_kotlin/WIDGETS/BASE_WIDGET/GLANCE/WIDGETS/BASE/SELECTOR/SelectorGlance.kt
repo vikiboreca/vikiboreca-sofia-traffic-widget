@@ -38,6 +38,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.EditStationList
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.EditStationButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.BaseWidget
 import com.google.gson.Gson
@@ -246,16 +247,25 @@ class SelectorGlance : BaseWidget() {
                                 Switch(
                                     pair.Name == realChosenName,
                                     onCheckedChange = {
+                                        var state:String = "";
+                                        val glanceID = getGlanceId(context)
                                         CoroutineScope(Dispatchers.Default).launch {
                                             saveCurrentStation(context, pairAdvanced)
                                             updateAppWidgetState(context, id) { prefsState ->
                                                 val toRemember = prefsState[ChosenStationKey]
-                                                prefsState[ChosenStationKey] =
-                                                    if (toRemember != pair.Name) pair.Name else ""
+                                                state = if (toRemember != pair.Name) pair.Name else ""
+                                                prefsState[ChosenStationKey] = state
                                             }
                                             selectorUpdater.updateWidget(context)
-                                            delay(100)
                                             basicUpdater.updateWidget(context)
+
+                                            if(state!=""){
+                                                val list = BaseButton().getTypes(context, pair.ID)
+                                                Log.d("fuck", list.toString())
+                                            }
+                                            else{
+
+                                            }
                                         }
                                     }
                                 )
@@ -265,5 +275,11 @@ class SelectorGlance : BaseWidget() {
                 }
             }
         }
+
+    }
+
+    private fun getGlanceId(context: Context):String{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        return prefs.getString("glanceId","")?:""
     }
 }
