@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
-import androidx.glance.Button
 import androidx.glance.GlanceComposable
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -44,11 +43,13 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.BaseWid
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.example.widget_kotlin.R
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.FilterPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.PopUpButton
 import com.google.gson.GsonBuilder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class FiltererGlance: BaseWidget() {
 
@@ -59,18 +60,19 @@ class FiltererGlance: BaseWidget() {
         super.UIContent(context, id, prefs)
         val list = getList(context)
         val pair = getCurrentStationPair(context)
-
+        val listFilter = getList2(context)
+        val list3 = ArrayList(listFilter.filter { it->it.list.isNotEmpty() })
         Scaffold(
-            titleBar = { CustomTitleBar(pair.Name) },
+            titleBar = { CustomTitleBar(context,pair.Name, list3, pair.ID) },
             backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
-            content = {Content(context, list, pair.ID)}
+            content = {Content(context, list, pair.ID, list3)}
         )
 
     }
 
     @Composable
     private fun CustomTitleBar(
-        text: String
+        context:Context,text: String, list:ArrayList<Filter>, id:String
     ) {
         Row(
             modifier = GlanceModifier
@@ -83,7 +85,10 @@ class FiltererGlance: BaseWidget() {
                 text = "\uD83D\uDD04",
                 style = TextStyle(fontSize = 20.sp, color = ColorProvider(Color.Black, Color.White), fontWeight = FontWeight.Bold),
                 modifier = GlanceModifier.clickable {
-
+                    val list2 = list.find{it->it.id == id}
+                    Log.d("fuck", list.size.toString())
+                    Log.d("fuck", list2?.list.toString())
+                    saveList2(context, list)
                 }
             )
             Spacer(modifier = GlanceModifier.width(8.dp))
@@ -103,8 +108,7 @@ class FiltererGlance: BaseWidget() {
     }
 
     @Composable
-    private fun Content(context: Context, list: ArrayList<Int>, id:String){
-        val listFilter = getList2(context)
+    private fun Content(context: Context, list: ArrayList<Int>, id:String, listFilter:ArrayList<Filter>){
         var listPair:ArrayList<FilterPair> = ArrayList()
         listFilter.forEach { it->
             if(it.id == id){
@@ -118,7 +122,6 @@ class FiltererGlance: BaseWidget() {
             saveList2(context, listFilter)
             listPair = f.list
         }
-
         Column{
             listPair.forEach { it->
                 Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically){
@@ -127,6 +130,10 @@ class FiltererGlance: BaseWidget() {
                         Switch(it.state,
                             onCheckedChange = {
                                 it.state = !it.state
+                                saveList2(context, listFilter)
+                                CoroutineScope(Dispatchers.Default).launch{
+                                    filtererUpdater.updateWidget(context)
+                                }
                             })
                     }
                 }

@@ -247,7 +247,7 @@ class SelectorGlance : BaseWidget() {
                                 Switch(
                                     pair.Name == realChosenName,
                                     onCheckedChange = {
-                                        var state:String = "";
+                                        var state = "";
                                         val glanceID = getGlanceId(context)
                                         CoroutineScope(Dispatchers.Default).launch {
                                             saveCurrentStation(context, pairAdvanced)
@@ -257,7 +257,9 @@ class SelectorGlance : BaseWidget() {
                                                 prefsState[ChosenStationKey] = state
                                             }
                                             selectorUpdater.updateWidget(context)
-                                            BaseButton().getResults(context, getGlanceId(context))
+                                            if(state!=""){
+                                                BaseButton().getResults(context, glanceID)
+                                            }
                                             basicUpdater.updateWidget(context)
 
                                             if(state!=""){
