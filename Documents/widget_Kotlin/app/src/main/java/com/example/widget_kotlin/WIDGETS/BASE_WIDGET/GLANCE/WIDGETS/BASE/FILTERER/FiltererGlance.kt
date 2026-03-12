@@ -2,20 +2,25 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.FILTER
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
+import android.util.Log
 import androidx.core.content.edit
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
+import androidx.glance.Button
 import androidx.glance.GlanceComposable
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.Switch
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
@@ -39,6 +44,12 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.BaseWid
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.example.widget_kotlin.R
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.FilterPair
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.PopUpButton
+import com.google.gson.GsonBuilder
+
 class FiltererGlance: BaseWidget() {
 
     private val iconList = listOf(R.drawable.bus, R.drawable.tram, R.drawable.metro, R.drawable.trolley, R.drawable.night_bus)
@@ -76,9 +87,10 @@ class FiltererGlance: BaseWidget() {
                 }
             )
             Spacer(modifier = GlanceModifier.width(8.dp))
-            val scale = if (text.length > 14) 14f / text.length else 1f
+            val trueText = if(text!="not selected") "$text - filter" else "not selected"
+            val scale = if (trueText.length > 14) 14f / trueText.length else 1f
             Text(
-                text = text,
+                text = trueText,
                 style = TextStyle(
                     fontSize = (20f * scale).sp,
                     color = ColorProvider(Color.Black, Color.White),
@@ -93,7 +105,7 @@ class FiltererGlance: BaseWidget() {
     @Composable
     private fun Content(context: Context, list: ArrayList<Int>, id:String){
         val listFilter = getList2(context)
-        var listPair:ArrayList<Pair<Int, Boolean>> = ArrayList()
+        var listPair:ArrayList<FilterPair> = ArrayList()
         listFilter.forEach { it->
             if(it.id == id){
                 listPair = it.list;
@@ -109,13 +121,16 @@ class FiltererGlance: BaseWidget() {
 
         Column{
             listPair.forEach { it->
-                Row{
-                    DisplayIcon(it.first)
-                    Switch(it.second,
-                        onCheckedChange = {
-                            
-                        })
+                Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically){
+                    DisplayIcon(context,it.id)
+                    Row(GlanceModifier.defaultWeight(),horizontalAlignment = Alignment.End){
+                        Switch(it.state,
+                            onCheckedChange = {
+                                it.state = !it.state
+                            })
+                    }
                 }
+                Spacer(GlanceModifier.height(17.dp))
             }
         }
     }
@@ -157,11 +172,24 @@ class FiltererGlance: BaseWidget() {
 
     @Composable
     @GlanceComposable
-    private fun DisplayIcon(index:Int){
+    private fun DisplayIcon(context:Context,index:Int){
         Image(
             provider = ImageProvider(iconList[index-1]),
             contentDescription = null,
-            modifier = GlanceModifier.size(32.dp)
+            modifier = GlanceModifier.size(48.dp).clickable(actionRunCallback<PopUpButton>(
+                parameters = actionParametersOf(ActionParameters.Key<String>("vehicleType") to getTypeName(context, index))
+            )
         )
+        )
+    }
+
+    private fun getTypeName(context:Context,index:Int):String{
+        val assetManager = context.assets
+        val typesJson = assetManager.open("types.json").bufferedReader().use{it.readText()}
+        val gson = GsonBuilder().create()
+        val data: TypeAdvanced = gson.fromJson(typesJson, object : TypeToken<TypeAdvanced>() {}.type)
+        val typeList = data.types
+        //Log.d("nigga", "${typeList.size}")
+        return typeList[index-1].name
     }
 }

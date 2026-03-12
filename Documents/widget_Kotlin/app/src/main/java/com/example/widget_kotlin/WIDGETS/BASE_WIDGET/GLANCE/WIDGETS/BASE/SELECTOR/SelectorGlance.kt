@@ -257,6 +257,7 @@ class SelectorGlance : BaseWidget() {
                                                 prefsState[ChosenStationKey] = state
                                             }
                                             selectorUpdater.updateWidget(context)
+                                            BaseButton().getResults(context, getGlanceId(context))
                                             basicUpdater.updateWidget(context)
 
                                             if(state!=""){
