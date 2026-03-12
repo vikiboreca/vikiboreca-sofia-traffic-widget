@@ -2,26 +2,31 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.FILTER
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import android.util.Log
 import androidx.core.content.edit
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
+import androidx.glance.GlanceComposable
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.Switch
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
+import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -33,8 +38,10 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdv
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.BaseWidget
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-
+import com.example.widget_kotlin.R
 class FiltererGlance: BaseWidget() {
+
+    private val iconList = listOf(R.drawable.bus, R.drawable.tram, R.drawable.metro, R.drawable.trolley, R.drawable.night_bus)
 
     @Composable
     override fun UIContent(context: Context, id: GlanceId, prefs: Preferences) {
@@ -47,6 +54,7 @@ class FiltererGlance: BaseWidget() {
             backgroundColor = Color(0xFFd9e5fc).toColorProvider(),
             content = {Content(context, list, pair.ID)}
         )
+
     }
 
     @Composable
@@ -98,7 +106,18 @@ class FiltererGlance: BaseWidget() {
             saveList2(context, listFilter)
             listPair = f.list
         }
-        Log.d("fuck", listFilter.toString())
+
+        Column{
+            listPair.forEach { it->
+                Row{
+                    DisplayIcon(it.first)
+                    Switch(it.second,
+                        onCheckedChange = {
+                            
+                        })
+                }
+            }
+        }
     }
 
     private fun Color.toColorProvider() = ColorProvider(this, this)
@@ -135,4 +154,14 @@ class FiltererGlance: BaseWidget() {
         return advanced?.current?:StationPair("null", "not selected")
     }
 
+
+    @Composable
+    @GlanceComposable
+    private fun DisplayIcon(index:Int){
+        Image(
+            provider = ImageProvider(iconList[index-1]),
+            contentDescription = null,
+            modifier = GlanceModifier.size(32.dp)
+        )
+    }
 }
