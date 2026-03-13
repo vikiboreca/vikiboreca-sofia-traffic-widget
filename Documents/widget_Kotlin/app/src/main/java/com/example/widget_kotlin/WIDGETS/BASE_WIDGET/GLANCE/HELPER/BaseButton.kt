@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.BusEntry
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.Filter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.TypeAdvanced
@@ -182,6 +183,8 @@ class BaseButton : ActionCallback {
 
 
     private suspend fun getMap(context: Context, stopID: String): LinkedHashMap<Bus, ArrayList<ArriveTime>> {
+        val filters = getList2(context)
+        val filter = filters.find{it->it.id == stopID}?.list
         CurrentStationID = stopID
         val scrapperController = ScrapperController()
 
@@ -191,6 +194,8 @@ class BaseButton : ActionCallback {
         val typesJson = assetManager.open("types.json").bufferedReader().use { it.readText() }
 
         for (bus in buses) {
+            if(filter?.find{ it->it.id == bus.type}?.state == false) continue
+
             val map = getIsLastStationMap(assetManager, typesJson, bus)
             val realLastStation =
                 getFromPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, "undefined")
@@ -274,5 +279,12 @@ class BaseButton : ActionCallback {
         val pairTextOriginal = prefs.getString("activeStation", "null")
         if(pairTextOriginal == "null") return null
         return gson.fromJson(pairTextOriginal, object : TypeToken<StationPairAdvanced>() {}.type)
+    }
+    private fun getList2(context: Context):ArrayList<Filter>{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val listString = prefs.getString("filterList", "")?:""
+        if(listString.isEmpty()) return ArrayList()
+
+        return Gson().fromJson(listString, object:TypeToken<ArrayList<Filter>>(){}.type)
     }
 }

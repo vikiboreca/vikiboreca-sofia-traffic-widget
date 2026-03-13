@@ -256,7 +256,6 @@ class SelectorGlance : BaseWidget() {
                                                 state = if (toRemember != pair.Name) pair.Name else ""
                                                 prefsState[ChosenStationKey] = state
                                             }
-                                            selectorUpdater.updateWidget(context)
                                             if(state!=""){
                                                 BaseButton().getResults(context, glanceID)
                                             }
@@ -264,10 +263,12 @@ class SelectorGlance : BaseWidget() {
 
                                             if(state!=""){
                                                 val list = BaseButton().getTypes(context, pair.ID)
+                                                //Log.d("fuck3", list.toString())
                                                 saveTypes(context, list)
                                             }
                                             else saveTypes(context, null)
                                             filtererUpdater.updateWidget(context)
+                                            selectorUpdater.updateWidget(context)
                                         }
                                     }
                                 )

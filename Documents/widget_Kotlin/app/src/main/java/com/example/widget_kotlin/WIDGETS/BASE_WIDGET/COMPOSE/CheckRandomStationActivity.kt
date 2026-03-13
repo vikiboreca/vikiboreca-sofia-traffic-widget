@@ -158,6 +158,7 @@ class CheckRandomStationActivity: ComponentActivity() {
     private fun endActivity(context:Context,id:String, glanceId: String, funny: () -> Unit){
         val selectUpdate = WidgetUpdater(SelectorGlance::class.java)
         val baseUpdate = WidgetUpdater(BaseGlance::class.java)
+        val filtererUpdate = WidgetUpdater(BaseGlance::class.java)
         val baseButton = BaseButton()
         saveCurrentStation(context, id)
         lifecycleScope.launch(Dispatchers.Default) {
@@ -165,6 +166,7 @@ class CheckRandomStationActivity: ComponentActivity() {
             baseButton.getResults(context, glanceId)
             baseUpdate.updateWidget(context)
             selectUpdate.updateWidget(context)
+            filtererUpdate.updateWidget(context)
             funny()
             withContext(Dispatchers.Main) {
                 finish() // closes the current Activity
