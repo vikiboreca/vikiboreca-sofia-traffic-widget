@@ -1,6 +1,7 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -37,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.Filter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
@@ -66,6 +69,7 @@ class RemoveStationActivity: ComponentActivity() {
         val launcher = ActivityStarter.startResultActivity({
             activeList.remove(activePair)
             if (!activeList.isEmpty()) {
+                removeStationTypes(this@RemoveStationActivity, activePair)
                 changeName = activeList[0].original.Name
                 activePair = activeList[0]
             } else {
@@ -185,4 +189,28 @@ class RemoveStationActivity: ComponentActivity() {
         finish()
     }
 
+    private fun getList2(context: Context):ArrayList<Filter>{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val listString = prefs.getString("filterList", "")?:""
+        if(listString.isEmpty()) return ArrayList()
+
+        return Gson().fromJson(listString, object:TypeToken<ArrayList<Filter>>(){}.type)
+    }
+    private fun saveList2(context:Context, list:ArrayList<Filter>){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        prefs.edit{
+            putString("filterList", Gson().toJson(list))
+        }
+    }
+    private fun removeStationTypes(context: Context, advanced: StationPairAdvanced?){
+        val list = getList2(context)
+        if(advanced==null) return
+        if(advanced.counter.ID!="null"){
+            list.filter { it-> it.id!=advanced.original.ID && it.id!=advanced.counter.ID }
+        }
+        else{
+            list.filter{it-> it.id!=advanced.original.ID}
+        }
+        saveList2(context, list)
+    }
 }

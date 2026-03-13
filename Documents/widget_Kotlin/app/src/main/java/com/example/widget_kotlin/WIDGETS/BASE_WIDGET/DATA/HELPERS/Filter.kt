@@ -1,5 +1,6 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS
 
+
 data class Filter(val id:String) {
     var list:ArrayList<FilterPair> = ArrayList()
 

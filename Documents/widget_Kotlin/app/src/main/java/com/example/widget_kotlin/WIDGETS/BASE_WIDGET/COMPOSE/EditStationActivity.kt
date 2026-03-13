@@ -46,6 +46,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.FILTERER.FiltererGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
@@ -249,6 +250,8 @@ class EditStationActivity: ComponentActivity() {
     private fun exit(advanced: StationPairAdvanced, pair: StationPair){
         save(this@EditStationActivity, advanced, pair)
         lifecycleScope.launch(Dispatchers.Default) {
+            val list3 = BaseButton().getTypes(this@EditStationActivity, advanced.current.ID)
+            saveTypes(this@EditStationActivity, list3)
             selectorUpdater.updateWidget(this@EditStationActivity)
             baseUpdater.updateWidget(this@EditStationActivity)
             filterUpdater.updateWidget(this@EditStationActivity)
@@ -258,5 +261,14 @@ class EditStationActivity: ComponentActivity() {
 
     private fun isEmpty(station: StationPair):Boolean{
         return station.ID == "null" || station.Name == "null"
+    }
+
+    private fun saveTypes(context: Context, list:ArrayList<Int>?){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+
+        prefs.edit{
+            if(list!=null) putString("currentTypes", Gson().toJson(list))
+            else putString("currentTypes", "")
+        }
     }
 }

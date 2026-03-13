@@ -45,6 +45,9 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -256,19 +259,25 @@ class SelectorGlance : BaseWidget() {
                                                 state = if (toRemember != pair.Name) pair.Name else ""
                                                 prefsState[ChosenStationKey] = state
                                             }
-                                            if(state!=""){
-                                                BaseButton().getResults(context, glanceID)
-                                            }
-                                            basicUpdater.updateWidget(context)
-
-                                            if(state!=""){
-                                                val list = BaseButton().getTypes(context, pair.ID)
-                                                //Log.d("fuck3", list.toString())
-                                                saveTypes(context, list)
-                                            }
-                                            else saveTypes(context, null)
-                                            filtererUpdater.updateWidget(context)
-                                            selectorUpdater.updateWidget(context)
+                                            Parallel(
+                                                {
+                                                    if(state!=""){
+                                                        BaseButton().getResults(context, glanceID)
+                                                    }
+                                                    basicUpdater.updateWidget(context)
+                                                },
+                                                {
+                                                    if(state!=""){
+                                                        val list = BaseButton().getTypes(context, pair.ID)
+                                                        saveTypes(context, list)
+                                                    }
+                                                    else saveTypes(context, null)
+                                                    filtererUpdater.updateWidget(context)
+                                                },
+                                                {
+                                                    selectorUpdater.updateWidget(context)
+                                                }
+                                            )
                                         }
                                     }
                                 )
@@ -293,4 +302,8 @@ class SelectorGlance : BaseWidget() {
             else putString("currentTypes", "")
         }
     }
+    suspend fun Parallel(vararg tasks: suspend () -> Unit) =
+        coroutineScope {
+            tasks.map { async { it() } }.awaitAll()
+        }
 }

@@ -59,16 +59,11 @@ class FiltererGlance: BaseWidget() {
     @Composable
     override fun UIContent(context: Context, id: GlanceId, prefs: Preferences) {
         super.UIContent(context, id, prefs)
+        //remove(context)
         val list = getList(context)
         val pair = getCurrentStationPair(context)
         val listFilter = getList2(context)
         val list3 = ArrayList(listFilter.filter { it->it.list.isNotEmpty() && it.id!="null"})
-
-        list3.forEach { it->
-            Log.d("fuck2", it.id)
-            Log.d("fuck2", it.list.toString())
-        }
-        Log.d("fuck2", pair.toString())
 
         Scaffold(
             titleBar = { CustomTitleBar(context,pair.Name, list3, pair.ID) },
@@ -216,5 +211,13 @@ class FiltererGlance: BaseWidget() {
     private fun getGlanceId(context: Context):String{
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
         return prefs.getString("glanceId","")?:""
+    }
+
+    private fun remove(context: Context){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        prefs.edit{
+            remove("currentTypes")
+            remove("filterList")
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -41,10 +42,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.Filter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.ListPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.FILTERER.FiltererGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -54,6 +57,7 @@ import kotlinx.coroutines.launch
 class EditStationList: ComponentActivity() {
 
     val updater = WidgetUpdater(SelectorGlance::class.java)
+    val filterUpdater = WidgetUpdater(FiltererGlance::class.java)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setFinishOnTouchOutside(false)
@@ -98,6 +102,9 @@ class EditStationList: ComponentActivity() {
         val launcher3 = ActivityStarter.startResultActivity(
             pass = {
                 if (activeIndex != -1 && activeIndex < list.size) {
+                    val deleteList = list[activeIndex]
+                    deleteListTypes(deleteList)
+
                     list.removeAt(activeIndex)
                     justDeleted = true
                     activeIndex = if (list.size>1) 0 else -1
@@ -187,7 +194,7 @@ class EditStationList: ComponentActivity() {
                         saveActiveList(list, activeIndex)
                     }
                     else{
-                        if((justDeleted && activeIndex == -1) || list.size <= 1){
+                        if(list.size <= 1){
                             saveActiveList()
                         }
                     }
@@ -338,7 +345,38 @@ class EditStationList: ComponentActivity() {
     private fun exit (){
         lifecycleScope.launch(Dispatchers.Default) {
             updater.updateWidget(this@EditStationList)
+            filterUpdater.updateWidget(this@EditStationList)
             finish()
+        }
+    }
+
+    private fun getList2(context: Context):ArrayList<Filter>{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val listString = prefs.getString("filterList", "")?:""
+        if(listString.isEmpty()) return ArrayList()
+
+        return Gson().fromJson(listString, object:TypeToken<ArrayList<Filter>>(){}.type)
+    }
+    private fun saveList2(context:Context, list:ArrayList<Filter>){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        prefs.edit{
+            putString("filterList", Gson().toJson(list))
+        }
+    }
+    private fun removeStationTypes(context: Context, advanced: StationPairAdvanced?){
+        val list = getList2(context)
+        if(advanced==null) return
+        if(advanced.counter.ID!="null"){
+            list.filter { it-> it.id!=advanced.original.ID && it.id!=advanced.counter.ID }
+        }
+        else{
+            list.filter{it-> it.id!=advanced.original.ID}
+        }
+        saveList2(context, list)
+    }
+    private fun deleteListTypes(pair:ListPair){
+        pair.list.forEach { it->
+            removeStationTypes(this@EditStationList, it)
         }
     }
 }

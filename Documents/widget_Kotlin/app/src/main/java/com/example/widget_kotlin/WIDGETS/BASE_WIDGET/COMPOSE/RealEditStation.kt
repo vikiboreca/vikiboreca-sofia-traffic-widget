@@ -35,12 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.Filter
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.ActivityStarter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 class RealEditStation: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,15 +64,18 @@ class RealEditStation: ComponentActivity() {
             val intent = Intent().apply { putExtra("success", true); putExtra("counter", Gson().toJson(
                 StationPair("null", "null"))) }
             setResult(RESULT_OK, intent)
+            val list2 = getList2(this@RealEditStation)
+            list2.filter { it->it.id != ID }
+            saveList2(this@RealEditStation, list2)
             finish()
         }, {}, {})
 
         MaterialTheme{
-            UI(id, name, {it->id = it}, {it->name = it}, launcher, counter)
+            UI(id, name, {it->id = it}, {it->name = it}, launcher, counter, ID)
         }
     }
     @Composable
-    private fun UI(id:String, name:String, idChange:(it:String)->Unit, nameChange:(it:String)->Unit, launcher:ManagedActivityResultLauncher<Intent, ActivityResult>, counter:Boolean){
+    private fun UI(id:String, name:String, idChange:(it:String)->Unit, nameChange:(it:String)->Unit, launcher:ManagedActivityResultLauncher<Intent, ActivityResult>, counter:Boolean, originalID:String){
         var label1 by remember { mutableStateOf("ID") }
         var label2 by remember { mutableStateOf("Name") }
         var error1 by remember { mutableStateOf(false) }
@@ -122,6 +127,11 @@ class RealEditStation: ComponentActivity() {
                                 val pair = StationPair(id, name)
                                 val intent = Intent().apply { putExtra("success", true); putExtra("counter", Gson().toJson(pair)) }
                                 setResult(RESULT_OK, intent)
+                                if(id!=originalID){
+                                    val list2 = getList2(this@RealEditStation)
+                                    list2.filter { it->it.id != originalID }
+                                    saveList2(this@RealEditStation, list2)
+                                }
                                 finish()
                             },
                             onError = {
@@ -173,16 +183,17 @@ class RealEditStation: ComponentActivity() {
             }
         }
     }
-    private fun isPairValid(id:String,name:String, list: ArrayList<StationPairAdvanced>, setProblem:(Int)->Unit){
-        if(name.isEmpty()) setProblem(1)
-        list.forEach {it->
-            if(it.original.ID == id && it.original.Name == name){
-                setProblem(2); return;
-            }
-            if(it.counter.ID == id && it.counter.Name == name){
-                setProblem(2); return;
-            }
+    private fun getList2(context: Context):ArrayList<Filter>{
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val listString = prefs.getString("filterList", "")?:""
+        if(listString.isEmpty()) return ArrayList()
+
+        return Gson().fromJson(listString, object:TypeToken<ArrayList<Filter>>(){}.type)
+    }
+    private fun saveList2(context:Context, list:ArrayList<Filter>){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        prefs.edit{
+            putString("filterList", Gson().toJson(list))
         }
-        return setProblem(-1)
     }
 }
