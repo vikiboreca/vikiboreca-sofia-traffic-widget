@@ -1,6 +1,5 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
@@ -23,8 +22,10 @@ class PopUpActivity : ComponentActivity() {
         val count = prefs.getInt("popTextCount", 0)
         val paintRed = list[list.size-1] == "false"
         if(count>1) list.removeAt(list.size-1)
-
+        val vehicleID = getVehicleID(prefs);
         val text = getText(list, paintRed)
+
+        Log.d("fuck2", vehicleID)
         setContent {
             MaterialTheme{
                 Text(text)
@@ -36,12 +37,15 @@ class PopUpActivity : ComponentActivity() {
         val list = ArrayList<String>()
         val count = prefs.getInt("popTextCount", 0)
         for(i in 0 until count){
-            val word = prefs.getString("popText$i", "error")
-            if(!word.isNullOrEmpty()&&word!="error") list.add(word)
+            val word = prefs.getString("popText$i", "error") ?: "error"
+            if(word.isNotEmpty() &&word!="error") list.add(word)
         }
         return list
     }
-
+    private fun getVehicleID(prefs: SharedPreferences):String{
+        val id = prefs.getString("vehicleID", "null") ?: "null"
+        return id
+    }
     private fun getText(list: List<String>, paintRed: Boolean): AnnotatedString {
         return buildAnnotatedString {
             list.forEachIndexed { index, string ->

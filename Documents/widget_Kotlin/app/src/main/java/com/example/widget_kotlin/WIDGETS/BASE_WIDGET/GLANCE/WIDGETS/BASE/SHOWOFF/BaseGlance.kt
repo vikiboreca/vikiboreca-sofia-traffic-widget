@@ -132,7 +132,8 @@ class BaseGlance : GlanceAppWidget() {
                                                             parameters = actionParametersOf(ActionParameters.Key<String>("stationStop") to arrivals[index].lastStation,
                                                                 ActionParameters.Key<String>("busStop") to arrivals[index].realLastStation,
                                                                 ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString(),
-                                                                ActionParameters.Key<String>("isMetro") to "false")
+                                                                ActionParameters.Key<String>("isMetro") to "false",
+                                                                ActionParameters.Key<String>("vehicleID") to arrivals[index].vehicleID),
                                                         )
                                                         )
                                                     )
