@@ -21,6 +21,12 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    packaging{
+        resources{
+            excludes+="META-INF/DEPENDENCIES"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -55,6 +61,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.okhttp)
     implementation(libs.gson)
+    implementation(libs.gtfs)
+    implementation(libs.gtfs.protobuf)
+
 
     implementation(libs.glance)
     implementation(libs.androidx.glance.appwidget)

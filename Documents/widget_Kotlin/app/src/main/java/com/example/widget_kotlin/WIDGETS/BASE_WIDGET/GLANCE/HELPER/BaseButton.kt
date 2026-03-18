@@ -46,8 +46,10 @@ class BaseButton : ActionCallback {
         if(currentPair!=null){
             try {
                 Log.d("fuck", "send ${currentPair.original}")
-                val map = getMap(context,currentPair.current.ID)
-                addVehicleID(map, currentPair.current.ID)
+                val id = currentPair.current.ID
+                saveCoordinates(context, id)
+                val map = getMap(context,id)
+                addVehicleID(map, id)
                 saveListMemory(context, map, glanceId)
                 updater.updateWidget(context)
             } catch (e: Exception) {
@@ -65,8 +67,10 @@ class BaseButton : ActionCallback {
         if(currentPair!=null){
             try {
                 Log.d("fuck", "send ${currentPair.current}")
-                val map = getMap(context,currentPair.current.ID)
-                addVehicleID(map, currentPair.current.ID)
+                val id = currentPair.current.ID
+                saveCoordinates(context, id)
+                val map = getMap(context,id)
+                addVehicleID(map, id)
                 for (id in glanceIds) {
                     if (id.toString() == glanceIdString) {
                         saveListMemory(context, map, id)
@@ -309,6 +313,24 @@ class BaseButton : ActionCallback {
                     }
                 }
                 arriveTimes[index].vehicleID = s+arriveTimes[index].vehicleID.split("/")[1]
+            }
+        }
+    }
+    private fun saveCoordinates(context:Context, stopID:String){
+        val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        context.assets.open("stops.txt").bufferedReader().useLines{lines->
+            lines.drop(1).forEach { line->
+                val parts = line.split(",")
+                val id = parts[1]
+                if(id.isEmpty() || id!=stopID) return@forEach
+                val lat = parts[4].toDoubleOrNull()
+                val lon = parts[5].toDoubleOrNull()
+                if(lat!=null && lon!=null){
+                    prefs.edit{
+                        putString("stopCoordinates", Gson().toJson(Pair(lat, lon)))
+                    }
+                    return
+                }
             }
         }
     }

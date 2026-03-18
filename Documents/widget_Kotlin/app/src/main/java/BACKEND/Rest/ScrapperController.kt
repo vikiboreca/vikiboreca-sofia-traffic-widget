@@ -2,6 +2,7 @@ package BACKEND.Rest
 
 import BACKEND.DATA.Extra.ExtraStation
 import BACKEND.DATA.FullBus
+import BACKEND.Service.CoordinateService
 import BACKEND.Service.ExtraScrapperService
 import BACKEND.Service.NormalScrapperService
 import android.util.Log
@@ -29,8 +30,12 @@ class ScrapperController {
             return null;
         }
     }
+    suspend fun getBusCoordinates(busID:String):Pair<Double, Double>{
+        val scrapper = CoordinateService(busID)
+        return Pair(0.4, 0.4)
+    }
 
-    fun getBusMap(json:String):Map<String, FullBus>{
+    private fun getBusMap(json:String):Map<String, FullBus>{
         val listType = object : TypeToken<Map<String, FullBus>>() {}.type
         return Gson().fromJson(json, listType)
     }
