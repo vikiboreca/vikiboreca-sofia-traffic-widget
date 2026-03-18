@@ -30,9 +30,9 @@ class ScrapperController {
             return null;
         }
     }
-    suspend fun getBusCoordinates(busID:String):Pair<Double, Double>{
+    suspend fun getBusCoordinates(busID:String):Pair<Float, Float>{
         val scrapper = CoordinateService(busID)
-        return Pair(0.4, 0.4)
+        return scrapper.getCoordinates(busID)
     }
 
     private fun getBusMap(json:String):Map<String, FullBus>{
