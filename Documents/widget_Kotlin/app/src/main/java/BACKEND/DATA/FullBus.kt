@@ -21,7 +21,8 @@ data class FullBus(
 ) {
     fun toSimpleBus(): Bus {
         val list = details.map { it.t }.toCollection(ArrayList())
-        return Bus(name, type, list, stationSplitter(route_name))
+        val bus = Bus(name, type, list, stationSplitter(route_name), ext_id)
+        return bus;
     }
 
     private fun stationSplitter(route:String):String{

@@ -7,10 +7,10 @@ data class Bus(
     val name: String,
     val type: Int,
     var arriveTimes: ArrayList<Int>,
-    val lastStop: String
+    val lastStop: String,
+    val exName:String
     )
 {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Bus) return false

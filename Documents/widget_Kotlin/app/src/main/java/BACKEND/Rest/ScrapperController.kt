@@ -1,7 +1,9 @@
 package BACKEND.Rest
 
+import BACKEND.DATA.Extra.ExtraStation
 import BACKEND.DATA.FullBus
-import BACKEND.Service.ScrapperService
+import BACKEND.Service.ExtraScrapperService
+import BACKEND.Service.NormalScrapperService
 import android.util.Log
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.google.gson.Gson
@@ -9,10 +11,23 @@ import com.google.gson.reflect.TypeToken
 
 class ScrapperController {
     suspend fun getData(id:String):ArrayList<Bus> {
-        val scrapper = ScrapperService()
+        val scrapper = NormalScrapperService()
         val rawJson = scrapper.getRawData(id)
         val busMap = getBusMap(rawJson)
         return getBusList(busMap)
+    }
+
+    suspend fun getData(id:String, limit:Int): ExtraStation? {
+        val scrapper = ExtraScrapperService(id, limit)
+        try{
+            val rawJson = scrapper.getJson()
+            val type = object: TypeToken<ExtraStation>(){}.type
+            Log.d("fuck2", "extraSuccess")
+            return Gson().fromJson(rawJson, type)
+        }catch (e:Exception){
+            Log.d("fuck2", e.toString())
+            return null;
+        }
     }
 
     fun getBusMap(json:String):Map<String, FullBus>{
@@ -50,8 +65,8 @@ class ScrapperController {
     }
 
     suspend fun isIDValid(id:String):Boolean{
-        val scrapperService = ScrapperService()
-        return scrapperService.isIDValid(id)
+        val normalScrapperService = NormalScrapperService()
+        return normalScrapperService.isIDValid(id)
     }
 
 

@@ -8,7 +8,7 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class ScrapperService {
+class NormalScrapperService {
 
     private val client = OkHttpClient()
     private val baseUrl = "https://www.sofiatraffic.bg"

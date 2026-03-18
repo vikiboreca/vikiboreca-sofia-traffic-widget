@@ -47,6 +47,7 @@ class BaseButton : ActionCallback {
             try {
                 Log.d("fuck", "send ${currentPair.original}")
                 val map = getMap(context,currentPair.current.ID)
+                addVehicleID(map, currentPair.current.ID)
                 saveListMemory(context, map, glanceId)
                 updater.updateWidget(context)
             } catch (e: Exception) {
@@ -65,6 +66,7 @@ class BaseButton : ActionCallback {
             try {
                 Log.d("fuck", "send ${currentPair.current}")
                 val map = getMap(context,currentPair.current.ID)
+                addVehicleID(map, currentPair.current.ID)
                 for (id in glanceIds) {
                     if (id.toString() == glanceIdString) {
                         saveListMemory(context, map, id)
@@ -286,5 +288,14 @@ class BaseButton : ActionCallback {
         if(listString.isEmpty()) return ArrayList()
 
         return Gson().fromJson(listString, object:TypeToken<ArrayList<Filter>>(){}.type)
+    }
+
+    private suspend fun addVehicleID(map:Map<Bus, ArrayList<ArriveTime>>, id:String){
+        val controller = ScrapperController()
+        val extraStation = controller.getData(id, map.size*4)
+        Log.d("fuck2", extraStation.toString())
+        map.forEach { bus, arriveTimes->
+            val list2 = extraStation?.departures?.map{it->it.lineId == bus.exName}  
+        }
     }
 }

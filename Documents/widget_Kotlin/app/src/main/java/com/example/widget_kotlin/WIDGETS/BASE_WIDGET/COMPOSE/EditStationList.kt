@@ -192,13 +192,16 @@ class EditStationList: ComponentActivity() {
                 BorderedTextButton("✔\uFE0F") {
                     if(!justDeleted && activeIndex != -1){
                         saveActiveList(list, activeIndex)
+                        exit()
                     }
                     else{
                         if(list.size <= 1){
-                            saveActiveList()
+                            Toast.makeText(this@EditStationList, "You need to have a list to exit", Toast.LENGTH_SHORT).show()
+                        }
+                        else{
+                            Toast.makeText(this@EditStationList, "Select a list", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    exit()
                 }
             }
         }
