@@ -307,7 +307,7 @@ class BaseButton : ActionCallback {
                     2->"TM"
                     3->""
                     4->"TB"
-                    5->"N"
+                    5->"A"
                     else -> {
                         ""
                     }

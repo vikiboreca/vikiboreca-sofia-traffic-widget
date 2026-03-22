@@ -1,13 +1,18 @@
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.secrets)
 }
 
+
+
 android {
+
     namespace = "com.example.widget_kotlin"
     compileSdk = 36
 
@@ -50,9 +55,14 @@ android {
     kotlin {
         jvmToolchain(11)
     }
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    tasks.withType<KotlinCompile> {
         compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
     }
+}
+
+secrets{
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "secrets.defaults.properties"
 }
 
 dependencies {
@@ -85,4 +95,6 @@ dependencies {
 
     implementation(libs.androidx.work)
     implementation(libs.jsoup)
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
 }
