@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +29,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.widget_kotlin.R
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.Maps.TransitMapActivity
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 
 class PopUpActivity : ComponentActivity() {
@@ -40,16 +42,15 @@ class PopUpActivity : ComponentActivity() {
         val count = prefs.getInt("popTextCount", 0)
         val paintRed = list[list.size-1] == "false"
         if(count>1) list.removeAt(list.size-1)
-        val vehicleID = getVehicleID(prefs);
+        val vehicleID = getVehicleID(prefs)
         val text = getText(list, paintRed)
 
-        Log.d("fuck2", vehicleID)
         setContent {
             MaterialTheme{
                 Column(verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally){
                     Text(text)
                     if(vehicleID!="null"){
-                        DisplayIcon()
+                        DisplayIcon(vehicleID)
                     }
                 }
             }
@@ -65,7 +66,7 @@ class PopUpActivity : ComponentActivity() {
         }
         return list
     }
-    private fun getVehicleID(prefs: SharedPreferences):String{
+    private fun getVehicleID(prefs: SharedPreferences): String {
         val id = prefs.getString("vehicleID", "null") ?: "null"
         return id
     }
@@ -93,7 +94,7 @@ class PopUpActivity : ComponentActivity() {
         }
     }
     @Composable
-    private fun DisplayIcon(){
+    private fun DisplayIcon(id:String){
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.maps),
             contentDescription = null,
@@ -101,6 +102,9 @@ class PopUpActivity : ComponentActivity() {
             modifier = Modifier.width(40.dp).height(43.dp)
                 .clickable(onClick = {
                     val intent = Intent(this@PopUpActivity, TransitMapActivity::class.java)
+                        .apply{
+                            putExtra("vehicleID", id)
+                        }
                     startActivity(intent)
                 }).border(
                     width = 2.dp,

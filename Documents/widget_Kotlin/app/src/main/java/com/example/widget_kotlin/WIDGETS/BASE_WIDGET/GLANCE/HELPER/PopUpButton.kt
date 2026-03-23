@@ -18,6 +18,7 @@ class PopUpButton : ActionCallback{
         val busStop = parameters[ActionParameters.Key<String>("busStop")]
         val stationStop = parameters[ActionParameters.Key<String>("stationStop")]
         val isLast = parameters[ActionParameters.Key<String>("isLast")]
+        val bus = parameters[ActionParameters.Key<String>("bus")].toString()
         val vehicleID = parameters[ActionParameters.Key<String>("vehicleID")].toString()
         val isMetro = parameters[ActionParameters.Key<String>("isMetro")]
 
@@ -39,12 +40,12 @@ class PopUpButton : ActionCallback{
             }
         }
         }
-        saveToPreferences(context, list, vehicleID)
+        saveToPreferences(context, list, bus, vehicleID)
         val startActivity = ActivityStarter(PopUpActivity::class.java)
         startActivity.startIntent(context)
     }
 
-    private fun saveToPreferences(context: Context, list:List<String>, vehicleID:String){
+    private fun saveToPreferences(context: Context, list:List<String>, bus:String, vehicleID:String){
         val preferences = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
         preferences.edit {
             putInt("popTextCount", list.size)
@@ -52,6 +53,7 @@ class PopUpButton : ActionCallback{
                 index, string ->
                 putString("popText$index", string)
             }
+            putString("bus", bus)
             putString("vehicleID", vehicleID)
         }
     }
