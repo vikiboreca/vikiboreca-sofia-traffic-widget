@@ -57,6 +57,8 @@ class EditStationActivity: ComponentActivity() {
     val selectorUpdater = WidgetUpdater(SelectorGlance::class.java)
     val baseUpdater = WidgetUpdater(BaseGlance::class.java)
 
+    var lost:Pair<String, String> = Pair("", "")
+
     val filterUpdater = WidgetUpdater(FiltererGlance::class.java)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,6 +97,7 @@ class EditStationActivity: ComponentActivity() {
                 val s = intent?.getStringExtra("counter")
                 val p:StationPair = Gson().fromJson(s, object : TypeToken<StationPair>() {}.type)
                 if(advancedStation.current.ID == advancedStation.original.ID){
+                    lost = Pair(p.ID,advancedStation.original.ID)
                     advancedStation.original = p
                 }
                 else{
@@ -226,8 +229,13 @@ class EditStationActivity: ComponentActivity() {
         val gson = Gson()
         val listString = prefs.getString("PairList", "") ?: ""
         val list:ArrayList<StationPairAdvanced> = gson.fromJson(listString, object : TypeToken<ArrayList<StationPairAdvanced>>() {}.type)
-        val index = list.indexOfFirst { it.original == pairAdvanced.original }
+        var index = list.indexOfFirst { it.original.ID == pairAdvanced.original.ID }
+
         if(index!=-1) list[index] = pairAdvanced
+        else{
+            index = list.indexOfFirst{it.original.ID == lost.second}
+            if(index!=-1) list[index] = pairAdvanced
+        }
 
         val listString2 = prefs.getString("pureStationLists", "") ?: ""
         val list2:ArrayList<ListPair> = gson.fromJson(listString2, object : TypeToken<ArrayList<ListPair>>() {}.type)

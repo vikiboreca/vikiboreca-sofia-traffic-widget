@@ -10,9 +10,10 @@ class TransitMapActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val vehicleID = intent?.getStringExtra("vehicleID").toString()
+        val tripID = intent?.getStringExtra("tripID").toString()
         val context = this@TransitMapActivity
         setContent {
-            TransitMap(vehicleID, context)
+            TransitMap(vehicleID, context, tripID)
         }
     }
 }

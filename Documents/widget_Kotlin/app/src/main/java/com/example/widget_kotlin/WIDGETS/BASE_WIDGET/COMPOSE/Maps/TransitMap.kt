@@ -50,7 +50,7 @@ suspend fun fetchBusPositions(context: Context, vehicleID: String): List<BusMark
 }
 
 @Composable
-fun TransitMap(vehicleID:String, context: Context) {
+fun TransitMap(vehicleID:String, context: Context, tripID:String) {
     var busStop by remember { mutableStateOf(getStopBus(context)) }
     var busPositions by remember { mutableStateOf<List<BusMarker>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
@@ -65,14 +65,13 @@ fun TransitMap(vehicleID:String, context: Context) {
                 busPositions = withContext(Dispatchers.IO) {
                     fetchBusPositions(context, vehicleID) + listOf(busStop)
                 }
-                Log.d("fuck2", busPositions.toString())
             } catch (e: Exception) {
                 // handle error
                 Log.d("fuck2", e.toString())
             } finally {
                 isLoading = false
             }
-            delay(15_000L)
+            delay(7_500L)
         }
     }
     Box(modifier = Modifier.fillMaxSize()) {

@@ -42,15 +42,16 @@ class PopUpActivity : ComponentActivity() {
         val count = prefs.getInt("popTextCount", 0)
         val paintRed = list[list.size-1] == "false"
         if(count>1) list.removeAt(list.size-1)
-        val vehicleID = getVehicleID(prefs)
+        val vehicleID = getID(prefs, "vehicleID")
+        val tripID = getID(prefs, "tripID")
         val text = getText(list, paintRed)
 
         setContent {
             MaterialTheme{
                 Column(verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally){
                     Text(text)
-                    if(vehicleID!="null"){
-                        DisplayIcon(vehicleID)
+                    if(vehicleID!="null" && tripID != "null"){
+                        DisplayIcon(vehicleID, tripID)
                     }
                 }
             }
@@ -66,8 +67,8 @@ class PopUpActivity : ComponentActivity() {
         }
         return list
     }
-    private fun getVehicleID(prefs: SharedPreferences): String {
-        val id = prefs.getString("vehicleID", "null") ?: "null"
+    private fun getID(prefs: SharedPreferences, key:String): String {
+        val id = prefs.getString(key, "null") ?: "null"
         return id
     }
     private fun getText(list: List<String>, paintRed: Boolean): AnnotatedString {
@@ -94,7 +95,7 @@ class PopUpActivity : ComponentActivity() {
         }
     }
     @Composable
-    private fun DisplayIcon(id:String){
+    private fun DisplayIcon(vehicleID:String, tripID:String){
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.maps),
             contentDescription = null,
@@ -103,7 +104,8 @@ class PopUpActivity : ComponentActivity() {
                 .clickable(onClick = {
                     val intent = Intent(this@PopUpActivity, TransitMapActivity::class.java)
                         .apply{
-                            putExtra("vehicleID", id)
+                            putExtra("vehicleID", vehicleID)
+                            putExtra("tripID", tripID)
                         }
                     startActivity(intent)
                 }).border(

@@ -4,4 +4,5 @@ data class ArriveTime(val minutes:Int, var isLastStation: Boolean, var lastStati
     var realLastStation:String = "undefined"
 
     var vehicleID:String = "null"
+    var tripID:String = "null"
 }

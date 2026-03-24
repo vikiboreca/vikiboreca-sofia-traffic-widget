@@ -297,25 +297,27 @@ class BaseButton : ActionCallback {
     private suspend fun addVehicleID(map:Map<Bus, ArrayList<ArriveTime>>, id:String){
         if(id.length<4) return;
         val controller = ScrapperController()
-        val extraStation = controller.getData(id, map.keys.size*4)
-        map.forEach { bus, arriveTimes->
-            val list2 = extraStation?.departures?.filter{it->it.lineId == bus.exName}?.take(arriveTimes.size)
-            list2?.forEachIndexed { index, extraBus->
-                Log.d("fuck2", extraBus.destination.bg + " $index")
-                arriveTimes[index].vehicleID = extraBus.vehicleId
-                val s = when(bus.type){
-                    1->"A"
-                    2->"TM"
-                    3->""
-                    4->"TB"
-                    5->"A"
-                    else -> {
-                        ""
+        try{
+            val extraStation = controller.getData(id, map.keys.size*4)
+            map.forEach { bus, arriveTimes->
+                val list2 = extraStation?.departures?.filter{it->it.lineId == bus.exName}?.take(arriveTimes.size)
+                list2?.forEachIndexed { index, extraBus->
+                    val s = when(bus.type){
+                        1->"A"
+                        2->"TM"
+                        3->""
+                        4->"TB"
+                        5->"A"
+                        else -> {
+                            ""
+                        }
                     }
+                    arriveTimes[index].vehicleID = s+extraBus.vehicleId.split("/")[1]
+                    arriveTimes[index].tripID = extraBus.tripId
                 }
-                arriveTimes[index].vehicleID = s+arriveTimes[index].vehicleID.split("/")[1]
-                Log.d("fuck2", arriveTimes[index].vehicleID)
             }
+        }catch(e:Exception){
+            Log.d("fuck2", e.toString())
         }
     }
     private fun saveCoordinates(context:Context, stopID:String){

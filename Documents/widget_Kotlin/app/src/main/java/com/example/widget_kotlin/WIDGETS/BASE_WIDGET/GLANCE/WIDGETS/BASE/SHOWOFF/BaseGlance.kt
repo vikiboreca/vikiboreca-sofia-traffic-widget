@@ -134,7 +134,8 @@ class BaseGlance : GlanceAppWidget() {
                                                                 ActionParameters.Key<String>("isLast") to arrivals[index].isLastStation.toString(),
                                                                 ActionParameters.Key<String>("isMetro") to "false",
                                                                 ActionParameters.Key<String>("bus") to Gson().toJson(bus),
-                                                                ActionParameters.Key<String>("vehicleID") to arrivals[index].vehicleID),
+                                                                ActionParameters.Key<String>("vehicleID") to arrivals[index].vehicleID,
+                                                                ActionParameters.Key<String>("tripID") to arrivals[index].tripID),
                                                         )
                                                         )
                                                     )

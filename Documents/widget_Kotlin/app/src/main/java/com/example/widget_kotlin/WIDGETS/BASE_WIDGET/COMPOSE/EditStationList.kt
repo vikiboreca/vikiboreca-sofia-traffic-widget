@@ -155,20 +155,25 @@ class EditStationList: ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 BorderedTextButton("➕") {
-                    if(!justDeleted && activeIndex!=-1 && list[activeIndex].list.size<20){
+                    if(!justDeleted && activeIndex!=-1 && list[activeIndex].list.size<20 && list.size>1){
                         val gson = Gson()
                         val json = gson.toJson(list)
                         val intent = AddStationActivity.createActivity(this@EditStationList, json, activeIndex, "")
                         launchers[0].launch(intent)
                     }
                     else{
-                        if(!justDeleted && list[activeIndex].list.size>=20){
-                            Toast.makeText(this@EditStationList, "Max 20 stations", Toast.LENGTH_SHORT).show()
+                        when{
+                            list.size<2 || activeIndex == -1->{
+                                Toast.makeText(this@EditStationList, "You need a list to add a station", Toast.LENGTH_SHORT).show()
+                            }
+                            !justDeleted && list[activeIndex].list.size>=20 ->{
+                                Toast.makeText(this@EditStationList, "Max 20 stations", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }
                 BorderedTextButton("➖") {
-                    if(!justDeleted && activeIndex!=-1 && list[activeIndex].list.isNotEmpty()){
+                    if(!justDeleted && activeIndex!=-1 && list[activeIndex].list.isNotEmpty() && list.size>1){
                         val intent = Intent(this@EditStationList, RemoveStationActivity::class.java)
                         val gson = Gson()
                         val json = gson.toJson(list)
@@ -177,8 +182,13 @@ class EditStationList: ComponentActivity() {
                         launchers[1].launch(intent)
                     }
                     else{
-                        if(!justDeleted && list[activeIndex].list.isEmpty()){
-                            Toast.makeText(this@EditStationList, "You don't have stations to delete", Toast.LENGTH_SHORT).show()
+                        when{
+                            list.size<2 || activeIndex == -1 ->{
+                                Toast.makeText(this@EditStationList, "You need a list to remove a station", Toast.LENGTH_SHORT).show()
+                            }
+                            !justDeleted && list[activeIndex].list.isEmpty()->{
+                                Toast.makeText(this@EditStationList, "You don't have stations to delete", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }
@@ -186,6 +196,13 @@ class EditStationList: ComponentActivity() {
                     if (!justDeleted && activeIndex != -1) {
                         val intent = AcceptActivity.createActivity(this@EditStationList, "Delete list", "Are you sure you want to delete this list", "Cancel", "Delete")
                         launchers[2].launch(intent)
+                    }
+                    else{
+                        when{
+                            activeIndex == -1 ->{
+                                Toast.makeText(this@EditStationList, "You need a list to delete a station", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 }
 
