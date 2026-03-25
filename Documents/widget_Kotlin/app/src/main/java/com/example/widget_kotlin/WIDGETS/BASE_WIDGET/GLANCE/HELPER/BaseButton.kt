@@ -301,6 +301,7 @@ class BaseButton : ActionCallback {
             val extraStation = controller.getData(id, map.keys.size*4)
             map.forEach { bus, arriveTimes->
                 val list2 = extraStation?.departures?.filter{it->it.lineId == bus.exName}?.take(arriveTimes.size)
+                Log.d("fuck2", bus.name)
                 list2?.forEachIndexed { index, extraBus->
                     val s = when(bus.type){
                         1->"A"
@@ -312,8 +313,11 @@ class BaseButton : ActionCallback {
                             ""
                         }
                     }
-                    arriveTimes[index].vehicleID = s+extraBus.vehicleId.split("/")[1]
+                    val list = extraBus.vehicleId.split("/")
+                    arriveTimes[index].prevehicleID = list[0]
+                    arriveTimes[index].vehicleID = s+list[1]
                     arriveTimes[index].tripID = extraBus.tripId
+                    Log.d("fuck2", arriveTimes[index].vehicleID)
                 }
             }
         }catch(e:Exception){
@@ -322,6 +326,13 @@ class BaseButton : ActionCallback {
     }
     private fun saveCoordinates(context:Context, stopID:String){
         val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+        val pair = getCoordinates(context, stopID)
+        prefs.edit{
+            putString("stopCoordinates", Gson().toJson(pair))
+            putString("currentStopID", stopID)
+        }
+    }
+    fun getCoordinates(context: Context,stopID: String):Pair<Double, Double>?{
         context.assets.open("stops.txt").bufferedReader().useLines{lines->
             lines.drop(1).forEach { line->
                 val parts = line.split(",")
@@ -330,12 +341,10 @@ class BaseButton : ActionCallback {
                 val lat = parts[4].toDoubleOrNull()
                 val lon = parts[5].toDoubleOrNull()
                 if(lat!=null && lon!=null){
-                    prefs.edit{
-                        putString("stopCoordinates", Gson().toJson(Pair(lat, lon)))
-                    }
-                    return
+                    return Pair(lat, lon)
                 }
             }
         }
+        return null
     }
 }

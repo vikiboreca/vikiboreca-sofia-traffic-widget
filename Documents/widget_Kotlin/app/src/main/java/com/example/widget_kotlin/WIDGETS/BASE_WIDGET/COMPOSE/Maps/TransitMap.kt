@@ -2,11 +2,8 @@ package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.Maps
 import BACKEND.Rest.ScrapperController
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import android.content.SharedPreferences
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +11,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleCoroutineScope
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.CameraPosition
@@ -27,7 +22,6 @@ import kotlinx.coroutines.delay
 import com.example.widget_kotlin.R
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.core.graphics.scale
 
@@ -35,17 +29,20 @@ data class BusMarker(
     val id: String,
     val line: String,
     val latLng: LatLng,
-    val iconID: Int
+    val iconID: Int,
+    val prevStops: List<LatLng>
 )
 
-suspend fun fetchBusPositions(context: Context, vehicleID: String): List<BusMarker> {
+suspend fun fetchBusPositions(context: Context, vehicleID: String, tripID: String): List<BusMarker> {
     val bus = getBus(context)
     val coords = ScrapperController().getBusCoordinates(vehicleID)
+    val list = ScrapperController().getPrevStopsCoordinates(context,tripID, getCurrentStopID(context))
+    Log.d("fuck2", list.toString())
     return listOf(
         BusMarker(bus?.type.toString(),
             bus?.name.toString(),
             LatLng(coords.first.toDouble(), coords.second.toDouble()),
-            getIconIdx(bus?.type ?: 3))
+            getIconIdx(bus?.type ?: 3), list)
     )
 }
 
@@ -63,7 +60,7 @@ fun TransitMap(vehicleID:String, context: Context, tripID:String) {
             isLoading = true
             try {
                 busPositions = withContext(Dispatchers.IO) {
-                    fetchBusPositions(context, vehicleID) + listOf(busStop)
+                    fetchBusPositions(context, vehicleID, tripID) + listOf(busStop)
                 }
             } catch (e: Exception) {
                 // handle error
@@ -124,14 +121,14 @@ private fun getIconIdx(idx:Int): Int{
 private fun getCurrentCoordinates(context: Context):Pair<Double, Double>{
     val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
     val text = prefs.getString("stopCoordinates", "")?:""
-    if(text.isEmpty()) return Pair(42.6977, 23.3219)
+    if(text.isEmpty() || text == "null") return Pair(42.6977, 23.3219)
     return Gson().fromJson(text, object:TypeToken<Pair<Double, Double>>(){}.type)
 }
 private fun getStopBus(context: Context): BusMarker{
     val stopCoordinates = getCurrentCoordinates(context)
     val stopLatLng = LatLng(stopCoordinates.first, stopCoordinates.second)
     return BusMarker(
-        "3", "Vehicle Stop", stopLatLng, getIconIdx(3)
+        "3", "Vehicle Stop", stopLatLng, getIconIdx(3), listOf()
     )
 }
 private fun resizeIcon(context: Context, iconRes: Int, sizeDp: Int = 32): BitmapDescriptor {
@@ -139,4 +136,10 @@ private fun resizeIcon(context: Context, iconRes: Int, sizeDp: Int = 32): Bitmap
     val bitmap = BitmapFactory.decodeResource(context.resources, iconRes)
     val scaled = bitmap.scale(sizePx, sizePx)
     return BitmapDescriptorFactory.fromBitmap(scaled)
+}
+
+private fun getCurrentStopID(context: Context):String{
+    val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
+    val text = prefs.getString("currentStopID", "")?:""
+    return text
 }
