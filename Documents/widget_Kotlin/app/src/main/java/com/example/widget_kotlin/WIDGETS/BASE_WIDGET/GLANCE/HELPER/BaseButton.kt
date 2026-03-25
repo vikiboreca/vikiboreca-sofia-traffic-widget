@@ -315,9 +315,9 @@ class BaseButton : ActionCallback {
                     }
                     val list = extraBus.vehicleId.split("/")
                     arriveTimes[index].prevehicleID = list[0]
+                    arriveTimes[index].aftervehicleID = list[1]
                     arriveTimes[index].vehicleID = s+list[1]
                     arriveTimes[index].tripID = extraBus.tripId
-                    Log.d("fuck2", arriveTimes[index].vehicleID)
                 }
             }
         }catch(e:Exception){

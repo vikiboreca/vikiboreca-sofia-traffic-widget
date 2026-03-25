@@ -29,6 +29,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.widget_kotlin.R
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.Maps.TransitMapActivity
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -42,16 +43,15 @@ class PopUpActivity : ComponentActivity() {
         val count = prefs.getInt("popTextCount", 0)
         val paintRed = list[list.size-1] == "false"
         if(count>1) list.removeAt(list.size-1)
-        val vehicleID = getID(prefs, "vehicleID")
-        val tripID = getID(prefs, "tripID")
+        val arrival = getArrival(prefs)
         val text = getText(list, paintRed)
 
         setContent {
             MaterialTheme{
                 Column(verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally){
                     Text(text)
-                    if(vehicleID!="null" && tripID != "null"){
-                        DisplayIcon(vehicleID, tripID)
+                    if(arrival!=null){
+                        DisplayIcon(arrival)
                     }
                 }
             }
@@ -67,9 +67,10 @@ class PopUpActivity : ComponentActivity() {
         }
         return list
     }
-    private fun getID(prefs: SharedPreferences, key:String): String {
-        val id = prefs.getString(key, "null") ?: "null"
-        return id
+    private fun getArrival(prefs: SharedPreferences): ArriveTime? {
+        val arriveText = prefs.getString("arrival", "null") ?: "null"
+        if(arriveText.isEmpty()) return null;
+        return Gson().fromJson(arriveText, ArriveTime::class.java)
     }
     private fun getText(list: List<String>, paintRed: Boolean): AnnotatedString {
         return buildAnnotatedString {
@@ -95,7 +96,7 @@ class PopUpActivity : ComponentActivity() {
         }
     }
     @Composable
-    private fun DisplayIcon(vehicleID:String, tripID:String){
+    private fun DisplayIcon(arrival: ArriveTime){
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.maps),
             contentDescription = null,
@@ -104,8 +105,7 @@ class PopUpActivity : ComponentActivity() {
                 .clickable(onClick = {
                     val intent = Intent(this@PopUpActivity, TransitMapActivity::class.java)
                         .apply{
-                            putExtra("vehicleID", vehicleID)
-                            putExtra("tripID", tripID)
+                            putExtra("arrival", Gson().toJson(arrival))
                         }
                     startActivity(intent)
                 }).border(

@@ -1,7 +1,9 @@
 package BACKEND.Service
 
+import BACKEND.DATA.Extra.TripBus
 import BACKEND.DATA.Extra.TripResponse
 import android.util.Log
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -23,7 +25,7 @@ import kotlin.coroutines.resumeWithException
 
 class CoordinateService() {
 
-    suspend fun getCoordinates(busID:String):Pair<Float, Float>{
+    suspend fun getCoordinates(busID:String): TripBus?{
         val url: URL = URI.create("https://gtfs.sofiatraffic.bg/api/v1/vehicle-positions").toURL()
         val inputStream: InputStream = url.openStream()
         val feed = GtfsRealtime.FeedMessage.parseFrom(inputStream)
@@ -31,17 +33,20 @@ class CoordinateService() {
             if(entity.hasVehicle()){
                 val vehicle = entity.vehicle
                 if(vehicle.vehicle.id!=busID) return@forEach
-
-                return Pair(vehicle.position.latitude, vehicle.position.longitude)
+                val coords = LatLng(vehicle.position.latitude.toDouble(),
+                    vehicle.position.longitude.toDouble()
+                )
+                return TripBus(vehicle.position.speed, coords)
             }
         }
-        return Pair(0f, 0f)
+        return null
     }
 
-    suspend fun getPrevStops(stpoID:String):List<String>{
-        val url = "https://api.livetransport.eu/sofia/vehicle/11%2F2684/trip"
+    suspend fun getPrevStops(stpoID:String, arrival: ArriveTime):List<String>{
+        val url = "https://api.livetransport.eu/sofia/vehicle/${arrival.prevehicleID}%2F${arrival.aftervehicleID}/trip"
         val text = getStringResponse(url)
         val trip: TripResponse = Gson().fromJson(text, object: TypeToken<TripResponse>(){}.type)
+        Log.d("fuck3", trip.toString())
         return getStopList(trip, stpoID)
     }
 
@@ -69,9 +74,7 @@ class CoordinateService() {
     private fun getStopList(trip: TripResponse, stopID:String):ArrayList<String>{
         val list:ArrayList<String> = ArrayList()
         val endIndex = trip.trip.stops.indexOfFirst { it->it.id == stopID }
-        Log.d("fuck2", endIndex.toString())
-        Log.d("fuck2", trip.trip.stops.toString())
-        for(i in trip.nextStop until endIndex){
+        for(i in trip.nextStop..endIndex){
             list.add(trip.trip.stops[i].id)
         }
         return list

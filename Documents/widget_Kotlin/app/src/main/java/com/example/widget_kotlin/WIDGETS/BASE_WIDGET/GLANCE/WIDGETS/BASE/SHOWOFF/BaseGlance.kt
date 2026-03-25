@@ -135,11 +135,9 @@ class BaseGlance : GlanceAppWidget() {
                                                                 ActionParameters.Key<String>("isMetro") to "false",
                                                                 ActionParameters.Key<String>("bus") to Gson().toJson(bus),
                                                                 ActionParameters.Key<String>("arrival") to Gson().toJson(arrivals[index]),
-                                                                ActionParameters.Key<String>("vehicleID") to arrivals[index].vehicleID,
-                                                                ActionParameters.Key<String>("tripID") to arrivals[index].tripID),
+                                                        ),
                                                         )
-                                                        )
-                                                    )
+                                                    ))
                                                     if (index != arrivals.size - 1) {
                                                         Text(
                                                             ", ",

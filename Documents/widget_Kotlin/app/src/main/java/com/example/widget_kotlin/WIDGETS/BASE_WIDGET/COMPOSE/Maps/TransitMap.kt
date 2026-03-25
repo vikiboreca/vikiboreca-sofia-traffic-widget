@@ -5,9 +5,11 @@ import android.content.Context.MODE_PRIVATE
 import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,30 +26,32 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.core.graphics.scale
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 
 data class BusMarker(
     val id: String,
     val line: String,
     val latLng: LatLng,
     val iconID: Int,
-    val prevStops: List<LatLng>
+    val prevStops: List<LatLng>,
+    val speed:String
 )
 
-suspend fun fetchBusPositions(context: Context, vehicleID: String, tripID: String): List<BusMarker> {
+suspend fun fetchBusPositions(context: Context, arrival: ArriveTime): List<BusMarker> {
     val bus = getBus(context)
-    val coords = ScrapperController().getBusCoordinates(vehicleID)
-    val list = ScrapperController().getPrevStopsCoordinates(context,tripID, getCurrentStopID(context))
-    Log.d("fuck2", list.toString())
+    val tripB = ScrapperController().getBusCoordinates(arrival.vehicleID)
+    val list = ScrapperController().getPrevStopsCoordinates(context,arrival, getCurrentStopID(context))
+    Log.d("fuck2", list.size.toString())
     return listOf(
         BusMarker(bus?.type.toString(),
             bus?.name.toString(),
-            LatLng(coords.first.toDouble(), coords.second.toDouble()),
-            getIconIdx(bus?.type ?: 3), list)
+            tripB?.coords ?: LatLng(0.0, 0.0),
+            getIconIdx(bus?.type ?: 3), list, tripB?.speed.toString()+" km/h")
     )
 }
 
 @Composable
-fun TransitMap(vehicleID:String, context: Context, tripID:String) {
+fun TransitMap(context: Context, arrival: ArriveTime) {
     var busStop by remember { mutableStateOf(getStopBus(context)) }
     var busPositions by remember { mutableStateOf<List<BusMarker>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
@@ -60,7 +64,7 @@ fun TransitMap(vehicleID:String, context: Context, tripID:String) {
             isLoading = true
             try {
                 busPositions = withContext(Dispatchers.IO) {
-                    fetchBusPositions(context, vehicleID, tripID) + listOf(busStop)
+                    fetchBusPositions(context, arrival) + listOf(busStop)
                 }
             } catch (e: Exception) {
                 // handle error
@@ -82,11 +86,17 @@ fun TransitMap(vehicleID:String, context: Context, tripID:String) {
             )
         ) {
             busPositions.forEach { bus ->
-                Marker(
-                    state = MarkerState(position = bus.latLng),
-                    title = bus.line,
-                    icon = resizeIcon(context, bus.iconID, 32)
-                )
+                key(bus.latLng, bus.speed){
+                    MarkerInfoWindowContent(
+                        state = remember{MarkerState(position = bus.latLng)},
+                        icon = resizeIcon(context, bus.iconID, 32)
+                    ) {
+                        Column{
+                            Text(text = "Line: ${bus.line}")
+                            if(bus.speed.isNotEmpty()) Text(text = "Speed: ${bus.speed}")
+                        }
+                    }
+                }
             }
         }
 
@@ -128,7 +138,7 @@ private fun getStopBus(context: Context): BusMarker{
     val stopCoordinates = getCurrentCoordinates(context)
     val stopLatLng = LatLng(stopCoordinates.first, stopCoordinates.second)
     return BusMarker(
-        "3", "Vehicle Stop", stopLatLng, getIconIdx(3), listOf()
+        "3", "Vehicle Stop", stopLatLng, getIconIdx(3), listOf(), ""
     )
 }
 private fun resizeIcon(context: Context, iconRes: Int, sizeDp: Int = 32): BitmapDescriptor {

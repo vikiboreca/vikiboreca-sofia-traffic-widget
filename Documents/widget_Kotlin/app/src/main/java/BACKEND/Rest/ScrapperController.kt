@@ -1,12 +1,14 @@
 package BACKEND.Rest
 
 import BACKEND.DATA.Extra.ExtraStation
+import BACKEND.DATA.Extra.TripBus
 import BACKEND.DATA.FullBus
 import BACKEND.Service.CoordinateService
 import BACKEND.Service.ExtraScrapperService
 import BACKEND.Service.NormalScrapperService
 import android.content.Context
 import android.util.Log
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
 import com.google.android.gms.maps.model.LatLng
@@ -33,7 +35,7 @@ class ScrapperController {
             return null;
         }
     }
-    suspend fun getBusCoordinates(busID:String):Pair<Float, Float>{
+    suspend fun getBusCoordinates(busID:String): TripBus? {
         val scrapper = CoordinateService()
         return scrapper.getCoordinates(busID)
     }
@@ -77,11 +79,10 @@ class ScrapperController {
         return normalScrapperService.isIDValid(id)
     }
 
-    suspend fun getPrevStopsCoordinates(context: Context,tripID:String, stopID:String):ArrayList<LatLng>{
+    suspend fun getPrevStopsCoordinates(context: Context, arrival: ArriveTime, stopID:String):ArrayList<LatLng>{
         val scrapper = CoordinateService()
         val base = BaseButton()
-        val stopList = scrapper.getPrevStops(stopID)
-        Log.d("fuck2", "${stopList.size}")
+        val stopList = scrapper.getPrevStops(stopID, arrival)
         val list:ArrayList<LatLng> = ArrayList()
         stopList.forEach { it->
             val pair = base.getCoordinates(context, it)
