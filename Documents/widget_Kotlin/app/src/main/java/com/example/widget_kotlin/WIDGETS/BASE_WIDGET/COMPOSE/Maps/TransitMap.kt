@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.CameraPosition
@@ -27,6 +28,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.core.graphics.scale
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
+import com.google.android.gms.maps.model.JointType
+import com.google.android.gms.maps.model.RoundCap
 
 data class BusMarker(
     val id: String,
@@ -41,17 +44,20 @@ suspend fun fetchBusPositions(context: Context, arrival: ArriveTime): List<BusMa
     val bus = getBus(context)
     val tripB = ScrapperController().getBusCoordinates(arrival.vehicleID)
     val list = ScrapperController().getPrevStopsCoordinates(context,arrival, getCurrentStopID(context))
+    if(tripB!=null) list[0] = tripB.coords
     Log.d("fuck2", list.size.toString())
+    val spd = if(tripB!=null) tripB.speed.toString()+" km/h" else "unknown"
     return listOf(
         BusMarker(bus?.type.toString(),
             bus?.name.toString(),
-            tripB?.coords ?: LatLng(0.0, 0.0),
-            getIconIdx(bus?.type ?: 3), list, tripB?.speed.toString()+" km/h")
+            tripB?.coords ?: if(list.isNotEmpty()) list[0] else LatLng(0.0, 0.0),
+            getIconIdx(bus?.type ?: 3), list, spd)
     )
 }
 
 @Composable
 fun TransitMap(context: Context, arrival: ArriveTime) {
+    Log.d("fuck2", "${arrival.vehicleID} hey ${arrival.tripID}")
     var busStop by remember { mutableStateOf(getStopBus(context)) }
     var busPositions by remember { mutableStateOf<List<BusMarker>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
@@ -96,6 +102,14 @@ fun TransitMap(context: Context, arrival: ArriveTime) {
                             if(bus.speed.isNotEmpty()) Text(text = "Speed: ${bus.speed}")
                         }
                     }
+                    if(bus.prevStops.isNotEmpty()){
+                        Polyline(
+                            points = bus.prevStops,
+                            color = getRouteColor(getBus(context)?.type?:3),
+                            width = 12f,
+                            jointType = JointType.ROUND
+                        )
+                    }
                 }
             }
         }
@@ -110,7 +124,7 @@ fun TransitMap(context: Context, arrival: ArriveTime) {
     }
 }
 private fun getBus(context: Context): Bus? {
-    val prefs = context.getSharedPreferences("bus_widget", Context.MODE_PRIVATE)
+    val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
     val busString = prefs.getString("bus", "null") ?: "null"
     if(busString == "null") return null;
     return Gson().fromJson(busString, object: TypeToken<Bus>(){}.type)
@@ -152,4 +166,13 @@ private fun getCurrentStopID(context: Context):String{
     val prefs = context.getSharedPreferences("bus_widget", MODE_PRIVATE)
     val text = prefs.getString("currentStopID", "")?:""
     return text
+}
+fun getRouteColor(index: Int): Color {
+    return when (index) {
+        1 -> Color(0xFF8B0000)
+        2 -> Color(0xFFFF8C00)
+        4 -> Color(0xFF00008B)
+        5 -> Color(0xFF000000)
+        else -> Color.Gray
+    }
 }

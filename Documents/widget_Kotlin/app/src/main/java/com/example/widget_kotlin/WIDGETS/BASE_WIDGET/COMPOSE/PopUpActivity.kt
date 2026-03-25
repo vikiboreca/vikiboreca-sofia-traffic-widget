@@ -50,7 +50,7 @@ class PopUpActivity : ComponentActivity() {
             MaterialTheme{
                 Column(verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally){
                     Text(text)
-                    if(arrival!=null){
+                    if(arrival!=null && arrival.vehicleID!="null" && arrival.tripID!="null"){
                         DisplayIcon(arrival)
                     }
                 }

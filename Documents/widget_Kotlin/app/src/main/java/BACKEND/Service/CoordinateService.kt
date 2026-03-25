@@ -74,7 +74,8 @@ class CoordinateService() {
     private fun getStopList(trip: TripResponse, stopID:String):ArrayList<String>{
         val list:ArrayList<String> = ArrayList()
         val endIndex = trip.trip.stops.indexOfFirst { it->it.id == stopID }
-        for(i in trip.nextStop..endIndex){
+
+        for(i in (trip.nextStop - 1).coerceAtLeast(0)..endIndex){
             list.add(trip.trip.stops[i].id)
         }
         return list

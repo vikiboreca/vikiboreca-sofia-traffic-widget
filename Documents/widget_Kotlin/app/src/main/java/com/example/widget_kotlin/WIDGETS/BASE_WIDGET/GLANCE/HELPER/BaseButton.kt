@@ -297,11 +297,10 @@ class BaseButton : ActionCallback {
     private suspend fun addVehicleID(map:Map<Bus, ArrayList<ArriveTime>>, id:String){
         if(id.length<4) return;
         val controller = ScrapperController()
-        try{
-            val extraStation = controller.getData(id, map.keys.size*4)
-            map.forEach { bus, arriveTimes->
+        val extraStation = controller.getData(id, map.keys.size*4)
+        map.forEach { bus, arriveTimes->
+            try{
                 val list2 = extraStation?.departures?.filter{it->it.lineId == bus.exName}?.take(arriveTimes.size)
-                Log.d("fuck2", bus.name)
                 list2?.forEachIndexed { index, extraBus->
                     val s = when(bus.type){
                         1->"A"
@@ -319,9 +318,10 @@ class BaseButton : ActionCallback {
                     arriveTimes[index].vehicleID = s+list[1]
                     arriveTimes[index].tripID = extraBus.tripId
                 }
+            }catch(e:Exception){
+                Log.d("fuck2", e.toString() + " ${bus.name}")
             }
-        }catch(e:Exception){
-            Log.d("fuck2", e.toString())
+
         }
     }
     private fun saveCoordinates(context:Context, stopID:String){
