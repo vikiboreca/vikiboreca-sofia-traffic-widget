@@ -90,4 +90,8 @@ class ScrapperController {
         }
         return list
     }
+    suspend fun fixRoute(list:List<LatLng>):List<LatLng>{
+        val scrapper = CoordinateService()
+        return scrapper.fixRoute(list)
+    }
 }

@@ -41,12 +41,14 @@ data class BusMarker(
 )
 
 suspend fun fetchBusPositions(context: Context, arrival: ArriveTime): List<BusMarker> {
+    val controller = ScrapperController()
     val bus = getBus(context)
     val tripB = ScrapperController().getBusCoordinates(arrival.vehicleID)
-    val list = ScrapperController().getPrevStopsCoordinates(context,arrival, getCurrentStopID(context))
+    var list = controller.getPrevStopsCoordinates(context,arrival, getCurrentStopID(context))
     if(tripB!=null) list[0] = tripB.coords
     Log.d("fuck2", list.size.toString())
     val spd = if(tripB!=null) tripB.speed.toString()+" km/h" else "unknown"
+    list = ArrayList(controller.fixRoute(list))
     return listOf(
         BusMarker(bus?.type.toString(),
             bus?.name.toString(),
