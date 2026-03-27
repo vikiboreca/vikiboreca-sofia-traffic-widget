@@ -1,11 +1,9 @@
 package com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE
 
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.border
@@ -30,7 +28,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.widget_kotlin.R
-import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.Login.LoginDecider
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.COMPOSE.Maps.TransitMapActivity
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.ArriveTime
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.Bus
@@ -54,7 +51,7 @@ class PopUpActivity : ComponentActivity() {
                 Column(verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally){
                     Text(text)
                     if(arrival!=null && arrival.vehicleID!="null" && arrival.tripID!="null"){
-                        DisplayIcon(arrival, this@PopUpActivity)
+                        DisplayIcon(arrival)
                     }
                 }
             }
@@ -99,14 +96,14 @@ class PopUpActivity : ComponentActivity() {
         }
     }
     @Composable
-    private fun DisplayIcon(arrival: ArriveTime, context: Context){
+    private fun DisplayIcon(arrival: ArriveTime){
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.maps),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.width(40.dp).height(43.dp)
                 .clickable(onClick = {
-                    val intent = Intent(this@PopUpActivity, LoginDecider::class.java)
+                    val intent = Intent(this@PopUpActivity, TransitMapActivity::class.java)
                         .apply{
                             putExtra("arrival", Gson().toJson(arrival))
                         }
