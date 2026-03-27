@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.secrets)
-    alias(libs.plugins.goggle.services)
 }
 val properties = Properties().apply {
     load(rootProject.file("secrets.properties").inputStream())
@@ -26,7 +25,6 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "MAPS_API_KEY", "\"${properties["MAPS_API_KEY"]}\"")
-        buildConfigField("String", "WEB_CLIENT_ID", "\"${properties["WEB_CLIENT_ID"]}\"")
     }
 
     packaging{
@@ -77,10 +75,6 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.gtfs)
     implementation(libs.gtfs.protobuf)
-    implementation(libs.firebase)
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services)
-    implementation(libs.google.android.libraries.identity.googleid)
 
 
     implementation(libs.glance)
