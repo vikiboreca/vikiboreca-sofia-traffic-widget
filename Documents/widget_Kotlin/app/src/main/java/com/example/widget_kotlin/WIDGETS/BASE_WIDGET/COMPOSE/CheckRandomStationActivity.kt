@@ -41,6 +41,7 @@ import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPair
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.DATA.HELPERS.StationPairAdvanced
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.FIXER.WidgetUpdater
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.HELPER.BaseButton
+import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.FILTERER.FiltererGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SELECTOR.SelectorGlance
 import com.example.widget_kotlin.WIDGETS.BASE_WIDGET.GLANCE.WIDGETS.BASE.SHOWOFF.BaseGlance
 import com.google.gson.Gson
@@ -158,7 +159,7 @@ class CheckRandomStationActivity: ComponentActivity() {
     private fun endActivity(context:Context,id:String, glanceId: String, funny: () -> Unit){
         val selectUpdate = WidgetUpdater(SelectorGlance::class.java)
         val baseUpdate = WidgetUpdater(BaseGlance::class.java)
-        val filtererUpdate = WidgetUpdater(BaseGlance::class.java)
+        val filtererUpdate = WidgetUpdater(FiltererGlance::class.java)
         val baseButton = BaseButton()
         saveCurrentStation(context, id)
         lifecycleScope.launch(Dispatchers.Default) {
@@ -179,13 +180,15 @@ class CheckRandomStationActivity: ComponentActivity() {
         saveCurrentStation(this@CheckRandomStationActivity, advanced)
         updateList(context, advanced)
         val selectUpdate = WidgetUpdater(SelectorGlance::class.java)
-        val baseUpdate = WidgetUpdater(BaseGlance::class.java)
+        val filtererUpdate = WidgetUpdater(BaseGlance::class.java)
+        val baseUpdate = WidgetUpdater(FiltererGlance::class.java)
         val baseButton = BaseButton()
         lifecycleScope.launch(Dispatchers.Default) {
 
             baseButton.getResults(context, glanceID)
             baseUpdate.updateWidget(context)
             selectUpdate.updateWidget(context)
+            filtererUpdate.updateWidget(context)
             withContext(Dispatchers.Main) {
                 finish() // closes the current Activity
             }
