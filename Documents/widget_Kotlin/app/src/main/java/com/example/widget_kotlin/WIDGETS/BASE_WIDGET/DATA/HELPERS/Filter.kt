@@ -9,4 +9,7 @@ data class Filter(val id:String) {
             list.add(FilterPair(it, true))
         }
     }
+    fun reset(){
+        list.clear()
+    }
 }

@@ -88,7 +88,7 @@ class BaseButton : ActionCallback {
 
     suspend fun getTypes(context: Context, id:String):ArrayList<Int>{
         try{
-            val map = getMap(context, id)
+            val map = getNoFilter(context, id)
             val list = map.keys.map{it.type}.toHashSet().toList()
             return ArrayList(list)
         }catch(e:Exception){
@@ -225,9 +225,39 @@ class BaseButton : ActionCallback {
 
         return busMap
     }
+    private suspend fun getNoFilter(context: Context, stopID: String): LinkedHashMap<Bus, ArrayList<ArriveTime>> {
+        CurrentStationID = stopID
+        val scrapperController = ScrapperController()
 
+        val buses: ArrayList<Bus> = scrapperController.getData(stopID)
+        val busMap: LinkedHashMap<Bus, ArrayList<ArriveTime>> = LinkedHashMap()
+        val assetManager = context.assets
+        val typesJson = assetManager.open("types.json").bufferedReader().use { it.readText() }
 
+        for (bus in buses) {
+            val map = getIsLastStationMap(assetManager, typesJson, bus)
+            val realLastStation =
+                getFromPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, "undefined")
 
+            val arriveTimes = busMap.getOrPut(bus) { ArrayList() }
+            val isLast = isLastStation(bus, map)
+
+            bus.arriveTimes.forEach { time ->
+                arriveTimes.add(ArriveTime(time, isLast, bus.lastStop))
+            }
+
+            if (!realLastStation.isNullOrEmpty() && realLastStation != "undefined") {
+                arriveTimes.forEach { it.realLastStation = realLastStation }
+            } else if (isLast) {
+                arriveTimes.forEach { it.realLastStation = bus.lastStop }
+                saveToPreferences(context, "busStationSave$CurrentStationID${bus.name}", null, bus.lastStop)
+            }
+
+            arriveTimes.sortBy(ArriveTime::minutes)
+        }
+
+        return busMap
+    }
 
 
     private fun saveListMemory(context: Context, map: Map<Bus, ArrayList<ArriveTime>>, glanceId: GlanceId) {
@@ -299,29 +329,29 @@ class BaseButton : ActionCallback {
         val controller = ScrapperController()
         val extraStation = controller.getData(id, map.keys.size*4)
         map.forEach { bus, arriveTimes->
-            try{
-                val list2 = extraStation?.departures?.filter{it->it.lineId == bus.exName}?.take(arriveTimes.size)
-                list2?.forEachIndexed { index, extraBus->
-                    val s = when(bus.type){
-                        1->"A"
-                        2->"TM"
-                        3->""
-                        4->"TB"
-                        5->"A"
-                        else -> {
-                            ""
-                        }
+            val list2 = extraStation?.departures?.filter{it->it.lineId == bus.exName}?.take(arriveTimes.size)
+            list2?.forEachIndexed { index, extraBus->
+                val s = when(bus.type){
+                    1->"A"
+                    2->"TM"
+                    3->""
+                    4->"TB"
+                    5->"A"
+                    else -> {
+                        ""
                     }
+                }
+                try{
                     val list = extraBus.vehicleId.split("/")
                     arriveTimes[index].prevehicleID = list[0]
                     arriveTimes[index].aftervehicleID = list[1]
                     arriveTimes[index].vehicleID = s+list[1]
                     arriveTimes[index].tripID = extraBus.tripId
+                }catch (e:Exception){
+                    Log.d("fuck2", e.toString())
                 }
-            }catch(e:Exception){
-                Log.d("fuck2", e.toString() + " ${bus.name}")
-            }
 
+            }
         }
     }
     private fun saveCoordinates(context:Context, stopID:String){
